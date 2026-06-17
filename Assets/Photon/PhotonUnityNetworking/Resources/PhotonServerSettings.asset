@@ -39,6 +39,15 @@ MonoBehaviour:
   - ClickRpc
   - DestroyRpc
   - HeresWhy
+  - Capture
+  - DestroySpaceship
+  - Fire
+  - RespawnSpaceship
+  - Revive
+  - RPC_EndGame
+  - SetGameState
+  - StartRevive
+  - StopRevive
   DisableAutoOpenWizard: 1
   ShowSettings: 0
   DevRegionSetOnce: 0
