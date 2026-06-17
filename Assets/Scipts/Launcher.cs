@@ -14,6 +14,7 @@ public class Launcher : MonoBehaviourPunCallbacks
 
 
     [SerializeField] TMP_InputField roomNameInputField;
+    [SerializeField] TMP_InputField nicknameInputField;
     [SerializeField] TMP_Text errorText;
     [SerializeField] TMP_Text roomNameText;
     [SerializeField] Transform roomListContent;
@@ -36,6 +37,11 @@ public class Launcher : MonoBehaviourPunCallbacks
 
     void Start()
     {
+        if (PlayerPrefs.HasKey("Nickname"))
+        {
+            nicknameInputField.text = PlayerPrefs.GetString("Nickname");
+        }
+
         Debug.Log("Connecting to Master");
         PhotonNetwork.ConnectUsingSettings();
     }
@@ -51,17 +57,44 @@ public class Launcher : MonoBehaviourPunCallbacks
     {
         MenuManager.Instance.OpenMenu("title");
         Debug.Log("Joined Lobby");
-        PhotonNetwork.NickName = "Player " + UnityEngine.Random.Range(0,1000).ToString("0000");
+        if (PlayerPrefs.HasKey("Nickname"))
+        {
+            PhotonNetwork.NickName = PlayerPrefs.GetString("Nickname");
+        }
+        else
+        {
+            PhotonNetwork.NickName = "Player " + UnityEngine.Random.Range(0, 1000).ToString("0000");
+        }
+
+        nicknameInputField.text = PhotonNetwork.NickName;
     }
+
 
     public void CreateRoom()
     {
+        string nickname = nicknameInputField.text.Trim();
+
+        if (!string.IsNullOrEmpty(nickname))
+        {
+            PhotonNetwork.NickName = nickname;
+
+            PlayerPrefs.SetString("Nickname", nickname);
+            PlayerPrefs.Save();
+        }
+
         if (string.IsNullOrEmpty(roomNameInputField.text))
         {
             return;
         }
+
         PhotonNetwork.CreateRoom(roomNameInputField.text);
         MenuManager.Instance.OpenMenu("loading");
+        //if (string.IsNullOrEmpty(roomNameInputField.text))
+        //{
+        //    return;
+        //}
+        //PhotonNetwork.CreateRoom(roomNameInputField.text);
+        //MenuManager.Instance.OpenMenu("loading");
     }
 
     public override void OnJoinedRoom()
@@ -71,10 +104,6 @@ public class Launcher : MonoBehaviourPunCallbacks
 
         Player[] players = PhotonNetwork.PlayerList;
 
-        //foreach (Transform child in playerListContent)
-        //{
-        //    Destroy(child.gameObject);
-        //}
 
         for (int i = 0; i < players.Count(); i++)
         {
@@ -109,8 +138,20 @@ public class Launcher : MonoBehaviourPunCallbacks
 
     public void JoinRoom(RoomInfo info)
     {
+        string nickname = nicknameInputField.text.Trim();
+
+        if (!string.IsNullOrEmpty(nickname))
+        {
+            PhotonNetwork.NickName = nickname;
+
+            PlayerPrefs.SetString("Nickname", nickname);
+            PlayerPrefs.Save();
+        }
+
         PhotonNetwork.JoinRoom(info.Name);
         MenuManager.Instance.OpenMenu("loading");
+        //PhotonNetwork.JoinRoom(info.Name);
+        //MenuManager.Instance.OpenMenu("loading");
     }
 
     public override void OnLeftRoom()
@@ -158,6 +199,21 @@ public class Launcher : MonoBehaviourPunCallbacks
             default:
                 return "Error de red.";
         }
+    }
+
+    public void SetNickname()
+    {
+        string nickname = nicknameInputField.text.Trim();
+
+        if (string.IsNullOrEmpty(nickname))
+            return;
+
+        PhotonNetwork.NickName = nickname;
+
+        PlayerPrefs.SetString("Nickname", nickname);
+        PlayerPrefs.Save();
+
+        Debug.Log("Nickname guardado: " + nickname);
     }
 
     public override void OnRoomListUpdate(List<RoomInfo> roomList)
