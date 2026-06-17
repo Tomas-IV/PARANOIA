@@ -89,12 +89,6 @@ public class Launcher : MonoBehaviourPunCallbacks
 
         PhotonNetwork.CreateRoom(roomNameInputField.text);
         MenuManager.Instance.OpenMenu("loading");
-        //if (string.IsNullOrEmpty(roomNameInputField.text))
-        //{
-        //    return;
-        //}
-        //PhotonNetwork.CreateRoom(roomNameInputField.text);
-        //MenuManager.Instance.OpenMenu("loading");
     }
 
     public override void OnJoinedRoom()
@@ -150,8 +144,6 @@ public class Launcher : MonoBehaviourPunCallbacks
 
         PhotonNetwork.JoinRoom(info.Name);
         MenuManager.Instance.OpenMenu("loading");
-        //PhotonNetwork.JoinRoom(info.Name);
-        //MenuManager.Instance.OpenMenu("loading");
     }
 
     public override void OnLeftRoom()
