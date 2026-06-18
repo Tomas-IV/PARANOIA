@@ -1,8 +1,7 @@
 using UnityEngine;
 using Photon.Voice.Unity;
-using Photon.Pun;
 
-public class PushToTalk : MonoBehaviourPun
+public class PushToTalk : MonoBehaviour
 {
     [Header("Configuración de Teclado")]
     [SerializeField] private KeyCode hablarKey = KeyCode.V;
@@ -11,37 +10,34 @@ public class PushToTalk : MonoBehaviourPun
 
     void Start()
     {
-        // Buscamos el componente Recorder en la escena (está en el VoiceManager)
-        voiceRecorder = FindObjectOfType<Recorder>();
+        // En lugar de buscar en toda la escena, buscamos en este MISMO objeto
+        voiceRecorder = GetComponent<Recorder>();
 
         if (voiceRecorder != null)
         {
-            // Aseguramos que el micrófono empiece apagado al entrar al juego
             voiceRecorder.TransmitEnabled = false;
+            Debug.Log("[PushToTalk] ÉXITO: Recorder encontrado y apagado al iniciar.");
         }
         else
         {
-            Debug.LogError("[PushToTalk] No se encontró ningún componente 'Recorder' en la escena.");
+            Debug.LogError("[PushToTalk] ERROR: Este script debe estar en el mismo objeto que el componente Recorder.");
         }
     }
 
     void Update()
     {
-        // Si no se encontró el Recorder, no ejecutamos nada para evitar errores
         if (voiceRecorder == null) return;
 
-        // Al presionar la tecla por primera vez
         if (Input.GetKeyDown(hablarKey))
         {
             voiceRecorder.TransmitEnabled = true;
-            Debug.Log("Micrófono abierto: Transmitiendo voz...");
+            Debug.Log("[PushToTalk] Transmitiendo...");
         }
 
-        // Al soltar la tecla
         if (Input.GetKeyUp(hablarKey))
         {
             voiceRecorder.TransmitEnabled = false;
-            Debug.Log("Micrófono cerrado: Silenciado.");
+            Debug.Log("[PushToTalk] Silenciado.");
         }
     }
 }
