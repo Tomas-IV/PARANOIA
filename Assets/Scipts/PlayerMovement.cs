@@ -30,7 +30,10 @@ public class PlayerMovement : MonoBehaviourPun
 
     void FixedUpdate()
     {
-        if (!photonView.IsMine) return;
+        if (!photonView.IsMine)
+        {
+            Destroy(rb);
+        }
 
         if (!canMove)return;
         

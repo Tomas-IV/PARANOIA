@@ -15,15 +15,16 @@ public class PlayerManager : MonoBehaviourPun
     [SerializeField] private int maxHealth = 100;
 
     public int CurrentHealth { get; private set; }
-
     public PlayerLifeState LifeState { get; private set; }
-
     public int Team { get; private set; }
+
+    private PlayerMovement movement;
 
     private void Start()
     {
-        CurrentHealth = maxHealth;
+        movement = GetComponent<PlayerMovement>();
 
+        CurrentHealth = maxHealth;
         LifeState = PlayerLifeState.Alive;
 
         Team = GameManager.Instance.GetPlayerTeam(photonView.Owner);
@@ -80,6 +81,8 @@ public class PlayerManager : MonoBehaviourPun
 
         LifeState = PlayerLifeState.Downed;
 
+        movement.SetCanMove(false);
+
         Debug.Log($"{photonView.Owner.NickName} DOWNED");
 
         if (PhotonNetwork.IsMasterClient)
@@ -105,6 +108,18 @@ public class PlayerManager : MonoBehaviourPun
 
         LifeState = PlayerLifeState.Alive;
 
+        movement.SetCanMove(true);
+
         Debug.Log($"{photonView.Owner.NickName} REVIVED");
+    }
+
+    public bool IsAlive()
+    {
+        return LifeState == PlayerLifeState.Alive;
+    }
+
+    public bool IsDowned()
+    {
+        return LifeState == PlayerLifeState.Downed;
     }
 }

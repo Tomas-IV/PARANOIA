@@ -3,25 +3,24 @@ using System.Collections.Generic;
 using Photon.Pun;
 using Photon.Realtime;
 using UnityEngine;
-using Hashtable = ExitGames.Client.Photon.Hashtable;
+//using Hashtable = ExitGames.Client.Photon.Hashtable;
 
 public class PlayerController : MonoBehaviourPunCallbacks
 {
     private PlayerMovement movement;
-    private int role = -1;
-    private bool isCaptured = false;
-    private bool isBeingRevived = false;
-    private float reviveStartTime;
-    
+    private PlayerManager playerManager;
 
-    public float reviveDuration = 10f;
-    public int Role => role;
-    public bool IsCaptured => isCaptured;
-    public bool IsBeingRevived => isBeingRevived;
+    [Header("Revive")]
+    [SerializeField] private float reviveDistance = 2f;
+    [SerializeField] private float reviveTime = 5f;
 
-    void Start()
+    private PlayerManager reviveTarget;
+    private float reviveProgress;
+
+    private void Start()
     {
         movement = GetComponent<PlayerMovement>();
+        playerManager = GetComponent<PlayerManager>();
 
         if (!photonView.IsMine)
         {
@@ -30,159 +29,76 @@ public class PlayerController : MonoBehaviourPunCallbacks
         }
 
         Camera.main.GetComponent<CameraFollow>().SetTarget(transform);
-
-        TryGetRoleSafe();
     }
 
-    void Update()
+    private void Update()
     {
-        if (!photonView.IsMine) return;
+        if (!photonView.IsMine)
+            return;
 
-        HandleMovement();
-        HandleReviveTimer();
+        HandleReviveInput();
     }
 
-    void LateUpdate()
+    private void HandleReviveInput()
     {
-        if (!photonView.IsMine) return;
+        PlayerManager target = FindDownedAlly();
 
-        UpdateVisibility();
-    }
-
-    void HandleMovement()
-    {
-        //if (isCaptured)
-        //{
-        //    movement.SetCanMove(false);
-        //    return;
-        //}
-
-        //if (!HasRole())
-        //{
-        //    movement.SetCanMove(false);
-        //    return;
-        //}
-
-        /*switch (GameManager.Instance.currentState)
+        if (target == null)
         {
-            case GameManager.GameState.Waiting:
-                movement.SetCanMove(false);
-                break;
+            ResetRevive();
+            return;
+        }
 
-            case GameManager.GameState.Hiding:
-                movement.SetCanMove(role == 0);
-                break;
-
-            case GameManager.GameState.Searching:
-                movement.SetCanMove(true);
-                break;
-
-            case GameManager.GameState.End:
-                movement.SetCanMove(false);
-                break;
-        }*/
-    }
-
-    void UpdateVisibility()
-    {
-        //if (role == -1) return;
-        //if (GameManager.Instance == null) return;
-
-        //bool hideOthers =
-        //    role == 1 &&
-        //    GameManager.Instance.currentState == GameManager.GameState.Hiding;
-
-        //PlayerController[] players = FindObjectsOfType<PlayerController>();
-
-        //foreach (var p in players)
-        //{
-        //    if (p == this) continue;
-
-        //    Renderer[] renderers = p.GetComponentsInChildren<Renderer>();
-
-        //    foreach (var r in renderers)
-        //    {
-        //        r.enabled = !hideOthers;
-        //    }
-        //}
-    }
-
-    void HandleReviveTimer()
-    {
-        if (!isCaptured || !isBeingRevived) return;
-
-        float elapsed = (float)PhotonNetwork.Time - reviveStartTime;
-
-        if (elapsed >= reviveDuration)
+        if (Input.GetKey(KeyCode.Space))
         {
-            photonView.RPC("Revive", RpcTarget.All);
+            if (reviveTarget != target)
+            {
+                reviveTarget = target;
+                reviveProgress = 0f;
+            }
+
+            reviveProgress += Time.deltaTime;
+
+            if (reviveProgress >= reviveTime)
+            {
+                target.Revive();
+                ResetRevive();
+            }
+        }
+        else
+        {
+            ResetRevive();
         }
     }
 
-    //role system
-    bool HasRole()
+    private PlayerManager FindDownedAlly()
     {
-        return PhotonNetwork.LocalPlayer.CustomProperties != null &&
-               PhotonNetwork.LocalPlayer.CustomProperties.ContainsKey("role");
-    }
-
-    void TryGetRoleSafe()
-    {
-        if (HasRole())
-            role = (int)PhotonNetwork.LocalPlayer.CustomProperties["role"];
-    }
-
-    public override void OnPlayerPropertiesUpdate(Player targetPlayer, Hashtable changedProps)
-    {
-        if (!photonView.IsMine) return;
-
-        if (targetPlayer == PhotonNetwork.LocalPlayer &&
-            changedProps.ContainsKey("role"))
+        foreach (PlayerManager player in GameManager.Instance.Players)
         {
-            role = (int)changedProps["role"];
+            if (player == null)
+                continue;
+
+            if (player == playerManager)
+                continue;
+
+            if (player.Team != playerManager.Team)
+                continue;
+
+            if (!player.IsDowned())
+                continue;
+
+            float dist = Vector2.Distance(transform.position, player.transform.position);
+
+            if (dist <= reviveDistance)
+                return player;
         }
+
+        return null;
     }
 
-    // capture/revive system
-    [PunRPC]
-    public void Capture()
+    private void ResetRevive()
     {
-        isCaptured = true;
-        isBeingRevived = false;
-
-        if (PhotonNetwork.IsMasterClient)
-        {
-            //GameManager.Instance.CheckGameOver();
-        }
-    }
-
-    [PunRPC]
-    public void StartRevive()
-    {
-        if (!isCaptured) return;
-
-        isBeingRevived = true;
-        reviveStartTime = (float)PhotonNetwork.Time;
-    }
-
-    [PunRPC]
-    public void StopRevive()
-    {
-        isBeingRevived = false;
-    }
-
-    [PunRPC]
-    public void Revive()
-    {
-        isCaptured = false;
-        isBeingRevived = false;
-    }
-
-    public float GetRemainingReviveTime()
-    {
-        if (!isBeingRevived) return reviveDuration;
-
-        float elapsed = (float)PhotonNetwork.Time - reviveStartTime;
-        return Mathf.Clamp(reviveDuration - elapsed, 0f, reviveDuration);
+        reviveTarget = null;
+        reviveProgress = 0f;
     }
 }
