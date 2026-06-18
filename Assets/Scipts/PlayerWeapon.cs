@@ -12,7 +12,7 @@ public class PlayerWeapon : MonoBehaviourPun
     [Header("Visual")]
     [SerializeField] private GameObject bulletVFXPrefab;
     [SerializeField] private Transform firePoint;
-    [SerializeField] private float muzzleOffset = 0.5f;
+    [SerializeField] private Transform reference;
     [SerializeField] private float bulletSpeed = 25f;
 
     private PlayerManager playerManager;
@@ -33,8 +33,8 @@ public class PlayerWeapon : MonoBehaviourPun
 
     private void Shoot()
     {
-        Vector2 origin = (Vector2)transform.position + (Vector2)transform.right * muzzleOffset;
-        Vector2 direction = transform.right;
+        Vector2 origin = firePoint.position;
+        Vector2 direction = reference.right;
 
         Debug.Log($"[WEAPON] Shoot from {origin}");
 
