@@ -102,11 +102,14 @@ public class GameManager : MonoBehaviourPunCallbacks
 
         for (int i = 0; i < players.Length; i++)
         {
-            Hashtable props = new Hashtable();
+            int team = i % 2;
 
-            props["team"] = i % 2;
+            Hashtable props = new Hashtable();
+            props["team"] = team;
 
             players[i].SetCustomProperties(props);
+
+            Debug.Log($"[GameManager] {players[i].NickName} assigned to Team {team}");
         }
 
         Debug.Log("[GameManager] Teams Assigned");

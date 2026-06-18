@@ -48,12 +48,18 @@ public class PlayerManager : MonoBehaviourPun
         if (LifeState != PlayerLifeState.Alive)
             return;
 
+        ApplyDamage(damage);
+    }
+
+    private void ApplyDamage(int damage)
+    {
         CurrentHealth -= damage;
 
         photonView.RPC(
             nameof(RPC_UpdateHealth),
             RpcTarget.All,
-            CurrentHealth);
+            CurrentHealth
+        );
 
         if (CurrentHealth <= 0)
         {
@@ -63,9 +69,7 @@ public class PlayerManager : MonoBehaviourPun
 
     private void EnterDownedState()
     {
-        photonView.RPC(
-            nameof(RPC_Downed),
-            RpcTarget.All);
+        photonView.RPC(nameof(RPC_Downed), RpcTarget.All);
     }
 
     [PunRPC]
@@ -78,7 +82,6 @@ public class PlayerManager : MonoBehaviourPun
     private void RPC_Downed()
     {
         CurrentHealth = 0;
-
         LifeState = PlayerLifeState.Downed;
 
         movement.SetCanMove(false);
@@ -96,16 +99,13 @@ public class PlayerManager : MonoBehaviourPun
         if (!PhotonNetwork.IsMasterClient)
             return;
 
-        photonView.RPC(
-            nameof(RPC_Revive),
-            RpcTarget.All);
+        photonView.RPC(nameof(RPC_Revive), RpcTarget.All);
     }
 
     [PunRPC]
     private void RPC_Revive()
     {
         CurrentHealth = maxHealth / 2;
-
         LifeState = PlayerLifeState.Alive;
 
         movement.SetCanMove(true);
@@ -113,13 +113,6 @@ public class PlayerManager : MonoBehaviourPun
         Debug.Log($"{photonView.Owner.NickName} REVIVED");
     }
 
-    public bool IsAlive()
-    {
-        return LifeState == PlayerLifeState.Alive;
-    }
-
-    public bool IsDowned()
-    {
-        return LifeState == PlayerLifeState.Downed;
-    }
+    public bool IsAlive() => LifeState == PlayerLifeState.Alive;
+    public bool IsDowned() => LifeState == PlayerLifeState.Downed;
 }
