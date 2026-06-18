@@ -19,34 +19,57 @@ public class PlayerManager : MonoBehaviourPun
     public int Team { get; private set; }
 
     private PlayerMovement movement;
+    private Collider2D[] colliders;
 
     private void Start()
     {
         movement = GetComponent<PlayerMovement>();
+        colliders = GetComponents<Collider2D>();
 
         CurrentHealth = maxHealth;
         LifeState = PlayerLifeState.Alive;
 
-        Team = GameManager.Instance.GetPlayerTeam(photonView.Owner);
-
         GameManager.Instance.Players.Add(this);
+
+        TryGetTeam();
     }
 
     private void OnDestroy()
     {
         if (GameManager.Instance != null)
-        {
             GameManager.Instance.Players.Remove(this);
+    }
+
+    private void TryGetTeam()
+    {
+        if (photonView.Owner.CustomProperties != null &&
+            photonView.Owner.CustomProperties.TryGetValue("team", out object team))
+        {
+            Team = (int)team;
+            Debug.Log($"[TEAM] {photonView.Owner.NickName} = Team {Team}");
+        }
+        else
+        {
+            Debug.LogWarning($"[TEAM] Not ready for {photonView.Owner.NickName}, retrying...");
+            Invoke(nameof(TryGetTeam), 0.5f);
         }
     }
 
-    public void TakeDamage(int damage)
+    public void TakeDamage(int damage, int attackerTeam)
     {
         if (!PhotonNetwork.IsMasterClient)
             return;
 
         if (LifeState != PlayerLifeState.Alive)
             return;
+
+        if (attackerTeam == Team)
+        {
+            Debug.Log($"[DAMAGE] FIRE FRIENDLY BLOCKED on {photonView.Owner.NickName}");
+            return;
+        }
+
+        Debug.Log($"[DAMAGE] {photonView.Owner.NickName} took {damage}");
 
         ApplyDamage(damage);
     }
@@ -55,16 +78,12 @@ public class PlayerManager : MonoBehaviourPun
     {
         CurrentHealth -= damage;
 
-        photonView.RPC(
-            nameof(RPC_UpdateHealth),
-            RpcTarget.All,
-            CurrentHealth
-        );
+        Debug.Log($"[DAMAGE] HP after: {CurrentHealth}");
+
+        photonView.RPC(nameof(RPC_UpdateHealth), RpcTarget.All, CurrentHealth);
 
         if (CurrentHealth <= 0)
-        {
             EnterDownedState();
-        }
     }
 
     private void EnterDownedState()
@@ -86,12 +105,12 @@ public class PlayerManager : MonoBehaviourPun
 
         movement.SetCanMove(false);
 
+        SetHitboxActive(false);
+
         Debug.Log($"{photonView.Owner.NickName} DOWNED");
 
         if (PhotonNetwork.IsMasterClient)
-        {
             GameManager.Instance.CheckWinCondition();
-        }
     }
 
     public void Revive()
@@ -110,7 +129,15 @@ public class PlayerManager : MonoBehaviourPun
 
         movement.SetCanMove(true);
 
+        SetHitboxActive(true);
+
         Debug.Log($"{photonView.Owner.NickName} REVIVED");
+    }
+
+    private void SetHitboxActive(bool active)
+    {
+        foreach (var col in colliders)
+            col.enabled = active;
     }
 
     public bool IsAlive() => LifeState == PlayerLifeState.Alive;
