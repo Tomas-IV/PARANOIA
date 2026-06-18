@@ -8,7 +8,7 @@ using Hashtable = ExitGames.Client.Photon.Hashtable;
 
 public class GameUI : MonoBehaviourPunCallbacks
 {
-    public TextMeshProUGUI notice;
+    /*public TextMeshProUGUI notice;
     public TextMeshProUGUI roleText;
     public TextMeshProUGUI timerText;
     public TextMeshProUGUI stateText;
@@ -173,5 +173,5 @@ public class GameUI : MonoBehaviourPunCallbacks
         return closest;
     }
 
-
+    */
 }

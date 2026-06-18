@@ -51,19 +51,19 @@ public class PlayerController : MonoBehaviourPunCallbacks
 
     void HandleMovement()
     {
-        if (isCaptured)
-        {
-            movement.SetCanMove(false);
-            return;
-        }
+        //if (isCaptured)
+        //{
+        //    movement.SetCanMove(false);
+        //    return;
+        //}
 
-        if (!HasRole())
-        {
-            movement.SetCanMove(false);
-            return;
-        }
+        //if (!HasRole())
+        //{
+        //    movement.SetCanMove(false);
+        //    return;
+        //}
 
-        switch (GameManager.Instance.currentState)
+        /*switch (GameManager.Instance.currentState)
         {
             case GameManager.GameState.Waiting:
                 movement.SetCanMove(false);
@@ -80,31 +80,31 @@ public class PlayerController : MonoBehaviourPunCallbacks
             case GameManager.GameState.End:
                 movement.SetCanMove(false);
                 break;
-        }
+        }*/
     }
 
     void UpdateVisibility()
     {
-        if (role == -1) return;
-        if (GameManager.Instance == null) return;
+        //if (role == -1) return;
+        //if (GameManager.Instance == null) return;
 
-        bool hideOthers =
-            role == 1 &&
-            GameManager.Instance.currentState == GameManager.GameState.Hiding;
+        //bool hideOthers =
+        //    role == 1 &&
+        //    GameManager.Instance.currentState == GameManager.GameState.Hiding;
 
-        PlayerController[] players = FindObjectsOfType<PlayerController>();
+        //PlayerController[] players = FindObjectsOfType<PlayerController>();
 
-        foreach (var p in players)
-        {
-            if (p == this) continue;
+        //foreach (var p in players)
+        //{
+        //    if (p == this) continue;
 
-            Renderer[] renderers = p.GetComponentsInChildren<Renderer>();
+        //    Renderer[] renderers = p.GetComponentsInChildren<Renderer>();
 
-            foreach (var r in renderers)
-            {
-                r.enabled = !hideOthers;
-            }
-        }
+        //    foreach (var r in renderers)
+        //    {
+        //        r.enabled = !hideOthers;
+        //    }
+        //}
     }
 
     void HandleReviveTimer()
@@ -152,7 +152,7 @@ public class PlayerController : MonoBehaviourPunCallbacks
 
         if (PhotonNetwork.IsMasterClient)
         {
-            GameManager.Instance.CheckGameOver();
+            //GameManager.Instance.CheckGameOver();
         }
     }
 

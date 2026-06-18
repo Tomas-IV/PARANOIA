@@ -7,73 +7,69 @@ using Hashtable = ExitGames.Client.Photon.Hashtable;
 
 public class GameManager : MonoBehaviourPunCallbacks
 {
-    [SerializeField] int minPlayers = 1;
     public static GameManager Instance;
 
-    public enum GameState { Waiting, Hiding, Searching, End }
-    public GameState currentState;
-    public enum ConnectionState { Disconnected, Connecting, Connected, JoiningRoom, InRoom }
-    public ConnectionState connectState;
+    public enum GameState
+    {
+        WaitingPlayers,
+        Playing,
+        EndGame
+    }
 
-    public float hidingTime = 45f;
-    public float searchingTime = 300f;
+    [SerializeField] private int minPlayers = 2;
 
-    private float stateStartTime;
-    private float stateDuration;
+    public GameState CurrentState { get; private set; }
 
-    private bool gameStarted = false;
-    private bool rolesAssigned;
-    public int gameResult = -1;
+    public List<PlayerManager> Players { get; } = new();
+
+    private bool gameStarted;
+    private int winnerTeam = -1;
 
     private void Awake()
     {
         if (Instance == null)
-        {
             Instance = this;
-        }
         else
-        {
             Destroy(gameObject);
-        }
     }
 
-    void Start()
+    private void Start()
     {
-        TryStartGameFlow();
-    }
-
-    void Update()
-    {
-        TryStartGameFlow();
+        TryStartMatch();
     }
 
     public override void OnJoinedRoom()
     {
-        TryStartGameFlow();
-    }
-
-    public override void OnMasterClientSwitched(Player newMasterClient)
-    {
-        TryStartGameFlow();
+        TryStartMatch();
     }
 
     public override void OnPlayerEnteredRoom(Player newPlayer)
     {
-        Debug.Log("[GM] Player joined: " + newPlayer.NickName);
+        TryStartMatch();
+    }
 
-        TryStartGameFlow();
-
-        //  si el juego ya empezó → asignar rol SOLO al nuevo jugador
-        if (PhotonNetwork.IsMasterClient && gameStarted && rolesAssigned)
+    public override void OnPlayerLeftRoom(Player otherPlayer)
+    {
+        if (PhotonNetwork.IsMasterClient)
         {
-            AssignRoleToNewPlayer(newPlayer);
+            CheckWinCondition();
         }
     }
 
-    // start game flow
-    void TryStartGameFlow()
+    public override void OnMasterClientSwitched(Player newMasterClient)
     {
-        if (!PhotonNetwork.IsMasterClient || PhotonNetwork.CurrentRoom == null)
+        if (PhotonNetwork.IsMasterClient)
+        {
+            CheckWinCondition();
+        }
+    }
+
+    private void TryStartMatch()
+    {
+        if (!PhotonNetwork.IsMasterClient)
+            return;
+
+        if (PhotonNetwork.CurrentRoom == null)
             return;
 
         if (gameStarted)
@@ -82,158 +78,109 @@ public class GameManager : MonoBehaviourPunCallbacks
         if (PhotonNetwork.CurrentRoom.PlayerCount < minPlayers)
             return;
 
-        Debug.Log("[GM] Starting GameFlow");
+        AssignTeams();
 
         gameStarted = true;
 
-        photonView.RPC("SetGameState", RpcTarget.AllBuffered, GameState.Waiting, 0f, 0f);
-
-        StartCoroutine(GameFlow());
-    }
-
-    //main flow
-    IEnumerator GameFlow()
-    {
-        // esperar mínimo jugadores
-        while (PhotonNetwork.CurrentRoom.PlayerCount < minPlayers)
-            yield return new WaitForSeconds(1f);
-
-        AssignRolesSafe();
-        rolesAssigned = true;
-
-        StartState(GameState.Hiding, hidingTime);
-        yield return new WaitForSeconds(hidingTime);
-
-        StartState(GameState.Searching, searchingTime);
-        yield return new WaitForSeconds(searchingTime);
-
-        EndGame(0);
-    }
-
-    //states
-    void StartState(GameState newState, float duration)
-    {
-        stateStartTime = (float)PhotonNetwork.Time;
-        stateDuration = duration;
-
         photonView.RPC(
-            "SetGameState",
+            nameof(RPC_SetGameState),
             RpcTarget.AllBuffered,
-            newState,
-            stateStartTime,
-            stateDuration
-        );
+            GameState.Playing);
+
+        Debug.Log("[GameManager] Match Started");
     }
 
     [PunRPC]
-    void SetGameState(GameState newState, float startTime, float duration)
+    private void RPC_SetGameState(GameState state)
     {
-        currentState = newState;
-        stateStartTime = startTime;
-        stateDuration = duration;
-
-        Debug.Log("[GameState] → " + newState);
+        CurrentState = state;
     }
 
-    public float GetRemainingTime()
-    {
-        float elapsed = (float)(PhotonNetwork.Time - stateStartTime);
-        return Mathf.Max(0, stateDuration - elapsed);
-    }
-
-    //role system
-    void AssignRolesSafe()
+    private void AssignTeams()
     {
         Player[] players = PhotonNetwork.PlayerList;
 
-        int seekerIndex = Random.Range(0, players.Length);
-
-        foreach (Player p in players)
+        for (int i = 0; i < players.Length; i++)
         {
             Hashtable props = new Hashtable();
-            props["role"] = (p == players[seekerIndex]) ? 1 : 0;
-            p.SetCustomProperties(props);
+
+            props["team"] = i % 2;
+
+            players[i].SetCustomProperties(props);
         }
 
-        Debug.Log("[Roles] Assigned (safe)");
-    }
-    public override void OnDisconnected(DisconnectCause cause)
-    {
-        Debug.Log("[GM] Disconnected");
-
-        PhotonNetwork.LoadLevel(0);
-    }
-    public override void OnPlayerLeftRoom(Player otherPlayer)
-    {
-        CheckGameOver();
+        Debug.Log("[GameManager] Teams Assigned");
     }
 
-    void AssignRoleToNewPlayer(Player newPlayer)
+    public int GetPlayerTeam(Player player)
     {
-        bool seekerExists = false;
+        if (player.CustomProperties.TryGetValue("team", out object team))
+            return (int)team;
 
-        foreach (Player p in PhotonNetwork.PlayerList)
+        return -1;
+    }
+
+    public void CheckWinCondition()
+    {
+        if (!PhotonNetwork.IsMasterClient)
+            return;
+
+        bool team0Alive = false;
+        bool team1Alive = false;
+
+        foreach (PlayerManager player in Players)
         {
-            if (p.CustomProperties != null &&
-                p.CustomProperties.ContainsKey("role") &&
-                (int)p.CustomProperties["role"] == 1)
-            {
-                seekerExists = true;
-                break;
-            }
+            if (player == null)
+                continue;
+
+            if (player.LifeState != PlayerManager.PlayerLifeState.Alive)
+                continue;
+
+            if (player.Team == 0)
+                team0Alive = true;
+
+            if (player.Team == 1)
+                team1Alive = true;
         }
 
-        Hashtable props = new Hashtable();
-        props["role"] = seekerExists ? 0 : 1;
+        if (team0Alive && team1Alive)
+            return;
 
-        newPlayer.SetCustomProperties(props);
+        winnerTeam = team0Alive ? 0 : 1;
 
-        Debug.Log("[Roles] New player → " + (seekerExists ? "Hider" : "Seeker"));
+        EndGame();
     }
 
-    public void CheckGameOver()
+    private void EndGame()
     {
-        if (!PhotonNetwork.IsMasterClient) return;
-
-        PlayerController[] players = FindObjectsOfType<PlayerController>();
-
-        bool allHidersCaptured = true;
-
-        foreach (var p in players)
-        {
-            if (p.Role == 0 && !p.IsCaptured) // hider vivo
-            {
-                allHidersCaptured = false;
-                break;
-            }
-        }
-
-        if (allHidersCaptured)
-        {
-            EndGame(1); // seeker win
-        }
-    }
-    private void EndGame(int result)
-    {
-        photonView.RPC("RPC_EndGame", RpcTarget.All, result);
+        photonView.RPC(
+            nameof(RPC_EndGame),
+            RpcTarget.All,
+            winnerTeam);
     }
 
     [PunRPC]
-    public void RPC_EndGame(int result)
+    private void RPC_EndGame(int winningTeam)
     {
-        gameResult = result;
-        currentState = GameState.End;
+        winnerTeam = winningTeam;
 
-        StartCoroutine(WaitAndReturnToMenu(5f));
+        CurrentState = GameState.EndGame;
+
+        Debug.Log($"TEAM {winnerTeam} WINS");
+
+        StartCoroutine(ReturnToLobby());
     }
-    IEnumerator WaitAndReturnToMenu(float delay)
+
+    private IEnumerator ReturnToLobby()
     {
-        yield return new WaitForSeconds(delay);
+        yield return new WaitForSeconds(5f);
 
         if (PhotonNetwork.InRoom)
         {
             PhotonNetwork.LeaveRoom();
-            yield return new WaitUntil(() => !PhotonNetwork.InRoom);
+
+            while (PhotonNetwork.InRoom)
+                yield return null;
         }
 
         PhotonNetwork.LoadLevel(0);

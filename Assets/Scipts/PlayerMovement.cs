@@ -26,10 +26,6 @@ public class PlayerMovement : MonoBehaviourPun
         if (!photonView.IsMine) return;
 
         input = new Vector2(Input.GetAxisRaw("Horizontal"),Input.GetAxisRaw("Vertical")).normalized;
-        //input.x = Input.GetAxisRaw("Horizontal");
-        //input.y = Input.GetAxisRaw("Vertical");
-
-        //input = input.normalized;
     }
 
     void FixedUpdate()
