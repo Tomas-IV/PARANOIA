@@ -19,6 +19,7 @@ public class LagCompensation : MonoBehaviourPun, IPunObservable
 
     void FixedUpdate()
     {
+        // Solo los jugadores remotos interpolan
         if (!photonView.IsMine)
         {
             Vector2 lerpedPosition = Vector2.Lerp(rb.position, networkPosition, Time.fixedDeltaTime * smoothingSpeed);
