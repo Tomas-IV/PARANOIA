@@ -4,6 +4,22 @@ using Photon.Pun;
 public class PhotonLagSimulator : MonoBehaviour
 {
     private bool simuladorActivo = false;
+    private static PhotonLagSimulator instancia;
+
+    void Awake()
+    {
+        // Sistema Singleton 
+        if (instancia == null)
+        {
+            instancia = this;
+            DontDestroyOnLoad(gameObject); // Hace que sobreviva entre escenas
+        }
+        else
+        {
+            Destroy(gameObject);
+            return;
+        }
+    }
 
     void Update()
     {
@@ -18,7 +34,7 @@ public class PhotonLagSimulator : MonoBehaviour
 
     private void ToggleLagSimulation()
     {
-        // 1. Verificamos que el cliente de Photon y su conexión interna existan
+     
         if (PhotonNetwork.NetworkingClient == null || PhotonNetwork.NetworkingClient.LoadBalancingPeer == null)
         {
             Debug.LogWarning("Lag Simulator: No se puede activar porque no estás conectado a Photon todavía.");
@@ -27,16 +43,16 @@ public class PhotonLagSimulator : MonoBehaviour
 
         simuladorActivo = !simuladorActivo;
 
-        // 2. Activamos o desactivamos el switch general de simulación en el Peer de Photon
+       
         PhotonNetwork.NetworkingClient.LoadBalancingPeer.IsSimulationEnabled = simuladorActivo;
 
         if (simuladorActivo)
         {
-            Debug.LogWarning("[LAG SIMULATOR] SIMULACIÓN ACTIVADA. Photon está emulando una conexión con lag por defecto.");
+            Debug.LogWarning("[LAG SIMULATOR] SIMULACIÓN ACTIVADA EN EL MENÚ. El lag afectará el emparejamiento y el gameplay.");
         }
         else
         {
-            Debug.Log("[LAG SIMULATOR] SIMULACIÓN DESACTIVADA. Volviendo a red local limpia.");
+            Debug.Log("[LAG SIMULATOR] SIMULACIÓN DESACTIVADA. Volviendo a red limpia.");
         }
     }
 }
