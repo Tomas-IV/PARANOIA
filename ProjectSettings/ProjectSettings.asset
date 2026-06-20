@@ -758,7 +758,12 @@ PlayerSettings:
   XboxOneOverrideIdentityPublisher: 
   vrEditorSettings: {}
   cloudServicesEnabled:
-    Collab: 1
+    Build: 0
+    Collab: 0
+    Game Performance: 0
+    Purchasing: 0
+    UDP: 0
+    Unity Ads: 0
   luminIcon:
     m_Name: 
     m_ModelFolderPath: 
@@ -773,11 +778,11 @@ PlayerSettings:
   apiCompatibilityLevel: 6
   activeInputHandler: 0
   windowsGamepadBackendHint: 0
-  cloudProjectId: f8c4d562-5416-40a8-b084-884b420ad907
+  cloudProjectId: ff0261e2-4de1-463f-b468-837081816774
   framebufferDepthMemorylessMode: 0
   qualitySettingsNames: []
   projectName: JuegosEnRed
-  organizationId: tomasrasso12
+  organizationId: slrmiche4509
   cloudEnabled: 0
   legacyClampBlendShapeWeights: 0
   playerDataPath: 
