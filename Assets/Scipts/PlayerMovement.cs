@@ -1,41 +1,50 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using Photon.Pun;
 
 public class PlayerMovement : MonoBehaviourPun
 {
     public float speed = 5f;
-
-    private bool canMove = true;
     private Rigidbody2D rb;
-    private Vector2 input;
+    private Vector2 moveInput;
+    private bool canMove = true; // Variable interna que usa PlayerManager
 
-    void Awake()
+    void Start()
     {
         rb = GetComponent<Rigidbody2D>();
-    }
-
-    public void SetCanMove(bool value)
-    {
-        canMove = value;
     }
 
     void Update()
     {
         if (!photonView.IsMine) return;
 
-        input = new Vector2(Input.GetAxisRaw("Horizontal"),Input.GetAxisRaw("Vertical")).normalized;
+        // Si el chat esta activo O el PlayerManager te desactivo el movimiento, nos frenamos
+        if (GameplayChat.ChatActivo || !canMove)
+        {
+            moveInput = Vector2.zero;
+            return;
+        }
+
+        float moveX = Input.GetAxisRaw("Horizontal");
+        float moveY = Input.GetAxisRaw("Vertical");
+        moveInput = new Vector2(moveX, moveY).normalized;
     }
 
     void FixedUpdate()
     {
         if (!photonView.IsMine) return;
 
-        if (!canMove)return;
-        
+        if (GameplayChat.ChatActivo || !canMove)
+        {
+            rb.velocity = Vector2.zero;
+            return;
+        }
 
-        Vector2 targetPosition = rb.position + input * speed * Time.fixedDeltaTime;
-        rb.MovePosition(targetPosition);
+        rb.velocity = moveInput * speed;
+    }
+
+    // Esta es la funcion que te pide el PlayerManager para solucionar el error de la imagen
+    public void SetCanMove(bool state)
+    {
+        canMove = state;
     }
 }

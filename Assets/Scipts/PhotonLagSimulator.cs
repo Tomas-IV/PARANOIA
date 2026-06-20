@@ -16,14 +16,12 @@ public class PhotonLagSimulator : MonoBehaviour
             instancia = this;
             DontDestroyOnLoad(gameObject);
 
-            // Buscamos o agregamos el componente oficial de Photon para la ventana gris
             ventanaGrafica = GetComponent<PhotonLagSimulationGui>();
             if (ventanaGrafica == null)
             {
                 ventanaGrafica = gameObject.AddComponent<PhotonLagSimulationGui>();
             }
 
-            // Lo dejamos apagado al inicio usando la propiedad estándar 'enabled' en minúscula
             if (ventanaGrafica != null)
             {
                 ventanaGrafica.enabled = false;
@@ -39,6 +37,12 @@ public class PhotonLagSimulator : MonoBehaviour
     void Update()
     {
 #if UNITY_EDITOR
+        // Si el chat del gameplay está activo en la partida, ignoramos por completo la tecla L
+        if (GameplayChat.ChatActivo)
+        {
+            return;
+        }
+
         if (Input.GetKeyDown(KeyCode.L))
         {
             ToggleLagSimulation();
@@ -56,10 +60,8 @@ public class PhotonLagSimulator : MonoBehaviour
 
         simuladorActivo = !simuladorActivo;
 
-        // 1. Activamos el lag interno de Photon
         PhotonNetwork.NetworkingClient.LoadBalancingPeer.IsSimulationEnabled = simuladorActivo;
 
-        // 2. Encendemos o apagamos el cuadro gris usando 'enabled' en minúscula
         if (ventanaGrafica != null)
         {
             ventanaGrafica.enabled = simuladorActivo;
