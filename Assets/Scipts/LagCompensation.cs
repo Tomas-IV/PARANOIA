@@ -7,9 +7,11 @@ using System;
 public class LagCompensation : MonoBehaviourPun, IPunObservable
 {
     private Vector2 NetworkPosition;
+    private Quaternion NetworkRotation; // <--- NUEVO: Guarda la rotación de red
+
     private Rigidbody2D rb;
 
-    [Tooltip("Velocidad de suavizado. Más alto = más rápido copia la posición real, pero puede verse más brusco.")]
+    [Tooltip("Velocidad de suavizado. Más alto = más rápido copia la posición y rotación real.")]
     public float smoothingSpeed = 15f;
 
     void Start()
@@ -19,12 +21,15 @@ public class LagCompensation : MonoBehaviourPun, IPunObservable
 
     private void FixedUpdate()
     {
-        // Si NO es mi personaje (es un enemigo), interpolamos su posición
+        // Si NO es mi personaje (es un enemigo), interpolamos su movimiento y su rotación
         if (!photonView.IsMine)
         {
-            // INTERPOLACIÓN: Movemos el Rigidbody suavemente hacia la última posición de red recibida
+            // 1. INTERPOLACIÓN DE POSICIÓN
             Vector2 lerpedPosition = Vector2.Lerp(rb.position, NetworkPosition, Time.fixedDeltaTime * smoothingSpeed);
             rb.MovePosition(lerpedPosition);
+
+            // 2. INTERPOLACIÓN DE ROTACIÓN (NUEVO)
+            transform.rotation = Quaternion.Lerp(transform.rotation, NetworkRotation, Time.fixedDeltaTime * smoothingSpeed);
         }
     }
 
@@ -32,13 +37,15 @@ public class LagCompensation : MonoBehaviourPun, IPunObservable
     {
         if (stream.IsWriting)
         {
-            // Si el personaje es MÍO, mandamos nuestra posición real a los demás
+            // Si el personaje es MÍO, mandamos nuestra posición y nuestra rotación actual a los demás
             stream.SendNext(rb.position);
+            stream.SendNext(transform.rotation); // <--- NUEVO
         }
         else
         {
-            // Si el personaje es de OTRO, recibimos su posición y la guardamos en el "punto real"
+            // Si el personaje es de OTRO, recibimos sus datos reales y los guardamos
             NetworkPosition = (Vector2)stream.ReceiveNext();
+            NetworkRotation = (Quaternion)stream.ReceiveNext(); // <--- NUEVO
         }
     }
 }
