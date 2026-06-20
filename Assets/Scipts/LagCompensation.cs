@@ -15,17 +15,24 @@ public class LagCompensation : MonoBehaviourPun, IPunObservable
     {
         rb = GetComponent<Rigidbody2D>();
         networkPosition = rb.position;
+        networkRotation = transform.eulerAngles.z;
     }
 
     void FixedUpdate()
     {
-        // Solo los jugadores remotos interpolan
         if (!photonView.IsMine)
         {
-            Vector2 lerpedPosition = Vector2.Lerp(rb.position, networkPosition, Time.fixedDeltaTime * smoothingSpeed);
+            Vector2 lerpedPosition =
+                Vector2.Lerp(rb.position, networkPosition,
+                Time.fixedDeltaTime * smoothingSpeed);
+
             rb.MovePosition(lerpedPosition);
 
-            rb.MoveRotation(Mathf.LerpAngle(rb.rotation, networkRotation, Time.fixedDeltaTime * smoothingSpeed));
+            float lerpedRotation =
+                Mathf.LerpAngle(rb.rotation, networkRotation,
+                Time.fixedDeltaTime * smoothingSpeed);
+
+            rb.MoveRotation(lerpedRotation);
         }
     }
 
@@ -34,7 +41,9 @@ public class LagCompensation : MonoBehaviourPun, IPunObservable
         if (stream.IsWriting)
         {
             stream.SendNext(rb.position);
-            stream.SendNext(rb.rotation);
+
+            // Enviamos la rotación real del transform
+            stream.SendNext(transform.eulerAngles.z);
         }
         else
         {
