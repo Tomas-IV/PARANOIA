@@ -36,9 +36,12 @@ public class PlayerWeapon : MonoBehaviourPun
         Vector2 origin = firePoint.position;
         Vector2 direction = reference.right;
 
-        Debug.Log($"[WEAPON] Shoot from {origin}");
-
-        RaycastHit2D hit = Physics2D.Raycast(origin, direction, range, hitMask);
+        RaycastHit2D hit = Physics2D.Raycast(
+            origin,
+            direction,
+            range,
+            hitMask
+        );
 
         Vector2 hitPoint;
 
@@ -46,45 +49,57 @@ public class PlayerWeapon : MonoBehaviourPun
         {
             hitPoint = hit.point;
 
-            Debug.Log($"[WEAPON] Hit: {hit.collider.name}");
-
             if (hit.collider.TryGetComponent(out PlayerManager target))
             {
-                Debug.Log($"[TEAM DEBUG] Shooter={playerManager.Team} Target={target.Team}");
-
-                if (target.Team == playerManager.Team)
+                if (target.Team != playerManager.Team)
                 {
-                    Debug.Log($"[WEAPON] FIRE FRIENDLY BLOCKED");
-                    SpawnBulletFX(origin, hitPoint);
-                    return;
+                    photonView.RPC(
+                        nameof(RPC_RequestDamage),
+                        RpcTarget.MasterClient,
+                        target.photonView.ViewID,
+                        damage,
+                        playerManager.Team
+                    );
                 }
-
-                photonView.RPC(
-                    nameof(RPC_RequestDamage),
-                    RpcTarget.MasterClient,
-                    target.photonView.ViewID,
-                    damage,
-                    playerManager.Team
-                );
             }
         }
         else
         {
             hitPoint = origin + direction * range;
-            Debug.Log("[WEAPON] Miss");
         }
 
+        // Mi propia bala visual
         SpawnBulletFX(origin, hitPoint);
+
+        // Bala visual para los demás jugadores
+        photonView.RPC(
+            nameof(RPC_PlayBulletFX),
+            RpcTarget.Others,
+            origin,
+            hitPoint
+        );
     }
 
     private void SpawnBulletFX(Vector2 origin, Vector2 hitPoint)
     {
-        GameObject bullet = Instantiate(bulletVFXPrefab, origin, Quaternion.identity);
-        bullet.GetComponent<BulletVisual>().Init(hitPoint, bulletSpeed);
+        GameObject bullet =
+            Instantiate(bulletVFXPrefab, origin, Quaternion.identity);
+
+        bullet.GetComponent<BulletVisual>()
+            .Init(hitPoint, bulletSpeed);
     }
 
     [PunRPC]
-    private void RPC_RequestDamage(int targetViewID, int damage, int attackerTeam)
+    private void RPC_PlayBulletFX(Vector2 origin, Vector2 hitPoint)
+    {
+        SpawnBulletFX(origin, hitPoint);
+    }
+
+    [PunRPC]
+    private void RPC_RequestDamage(
+        int targetViewID,
+        int damage,
+        int attackerTeam)
     {
         PhotonView view = PhotonView.Find(targetViewID);
 
@@ -94,6 +109,8 @@ public class PlayerWeapon : MonoBehaviourPun
         PlayerManager target = view.GetComponent<PlayerManager>();
 
         if (target != null)
+        {
             target.TakeDamage(damage, attackerTeam);
+        }
     }
 }
