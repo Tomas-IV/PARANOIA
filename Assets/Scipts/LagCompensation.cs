@@ -4,23 +4,16 @@ using Photon.Pun;
 public class LagCompensation : MonoBehaviourPun, IPunObservable
 {
     private Vector2 networkPosition;
-    private float networkAngle;
+    private float networkAngle; // Guardamos el angulo flotante en vez de un Quaternion
 
     private Rigidbody2D rb;
+    public float smoothingSpeed = 15f;
 
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
         networkPosition = transform.position;
         networkAngle = rb.rotation;
-
-        // Desactivamos la simulacion de fisicas locales para el rival azul
-        if (!photonView.IsMine && rb != null)
-        {
-            rb.bodyType = RigidbodyType2D.Kinematic;
-            rb.simulated = true;
-            rb.constraints = RigidbodyConstraints2D.None;
-        }
     }
 
     private void FixedUpdate()
@@ -28,27 +21,28 @@ public class LagCompensation : MonoBehaviourPun, IPunObservable
         // Si NO es mi personaje (es el rival azul)
         if (!photonView.IsMine)
         {
-            // Forzamos la posicion y la rotacion directo al Rigidbody
-            rb.position = networkPosition;
-            rb.rotation = networkAngle;
+            // 1. Desplazamiento fluido (Posicion)
+            Vector2 lerpedPosition = Vector2.Lerp(rb.position, networkPosition, Time.fixedDeltaTime * smoothingSpeed);
+            rb.MovePosition(lerpedPosition);
 
-            // Por si las dudas la fisica aun pise el transform, lo sincronizamos directo aqui
-            transform.position = networkPosition;
-            transform.eulerAngles = new Vector3(0, 0, networkAngle);
+            // 2. Giro fluido (Rotacion) usando la fisica de Unity para 2D
+            float lerpedAngle = Mathf.LerpAngle(rb.rotation, networkAngle, Time.fixedDeltaTime * smoothingSpeed);
+            rb.MoveRotation(lerpedAngle);
         }
     }
 
+    // El tubo de red de Photon
     public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
     {
         if (stream.IsWriting)
         {
-            // IMPORTANTE: Mandamos el angulo real del Transform por si tu script de rotacion no usa el Rigidbody
-            stream.SendNext((Vector2)transform.position);
-            stream.SendNext(transform.eulerAngles.z);
+            // Si el personaje es tuyo, mandas posicion y angulo actual
+            stream.SendNext(rb.position);
+            stream.SendNext(transform.eulerAngles.z); // Mandamos el angulo real de tu pantalla
         }
         else
         {
-            // Recibimos los datos exactos del rival
+            // Si es el rival, recibis los datos en el mismo orden exacto
             networkPosition = (Vector2)stream.ReceiveNext();
             networkAngle = (float)stream.ReceiveNext();
         }
