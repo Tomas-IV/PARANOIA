@@ -22,7 +22,6 @@ GameObject:
   - component: {fileID: 538266104343829098}
   - component: {fileID: 725183401465169581}
   - component: {fileID: -3619294283221143673}
-  - component: {fileID: 6489992565245331510}
   - component: {fileID: 7686899386016944536}
   m_Layer: 3
   m_Name: Player
@@ -71,7 +70,8 @@ MonoBehaviour:
   - {fileID: 2306417434654746510}
   - {fileID: -6885306659962147922}
   - {fileID: -3619294283221143673}
-  - {fileID: 6489992565245331510}
+  - {fileID: 3605285380415949098}
+  - {fileID: 35362363719592534}
   sceneViewId: 0
   InstantiationId: 0
   isRuntimeInstantiated: 0
@@ -367,18 +367,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a759978f19fe04c479bb0cdd8f11fd83, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!114 &6489992565245331510
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 124191237955447779}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0fa1a2b31ce1fc744a9e6f5dd4a5272f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  smoothingSpeed: 15
 --- !u!114 &7686899386016944536
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -556,6 +545,7 @@ GameObject:
   - component: {fileID: 3748707856237154419}
   - component: {fileID: 8492050246221898309}
   - component: {fileID: 3048027271729823496}
+  - component: {fileID: 3605285380415949098}
   - component: {fileID: 35362363719592534}
   m_Layer: 0
   m_Name: Sprite
@@ -662,6 +652,18 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 0c3526d70db6cb64baa205cea453504f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &3605285380415949098
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3827948210745869573}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0fa1a2b31ce1fc744a9e6f5dd4a5272f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!114 &35362363719592534
