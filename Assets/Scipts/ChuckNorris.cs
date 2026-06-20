@@ -1,44 +1,101 @@
-using UnityEngine.Networking;
-using Newtonsoft.Json;
-using UnityEngine;
 using System.Collections;
+using UnityEngine;
+using UnityEngine.Networking;
+using UnityEngine.UI;
+using TMPro;
+using Newtonsoft.Json;
+
 public class ChuckNorris : MonoBehaviour
 {
-    private string url = "https://api.chucknorris.io/jokes/random";
+    [Header("UI")]
+    [SerializeField] private GameObject jokeCanvas;
+    [SerializeField] private TextMeshProUGUI instrusionText;
+    [SerializeField] private TextMeshProUGUI jokeText;
+    [SerializeField] private Image jokeImage;
 
-    public void Update()
+    [Header("Settings")]
+    [SerializeField] private float visibleTime = 5f;
+
+    private const string URL = "https://api.chucknorris.io/jokes/random";
+
+    private Coroutine hideCoroutine;
+
+    private void Start()
+    {
+        jokeCanvas.SetActive(false);
+    }
+
+    private void Update()
     {
         if (Input.GetKeyDown(KeyCode.J))
         {
-            StartCoroutine(GetJoke((joke) =>
-            {
-                Debug.Log(joke);
-            }));
+            instrusionText.gameObject.SetActive(false);
+            StartCoroutine(GetJoke());
         }
     }
 
-    public IEnumerator GetJoke(System.Action<string> onResult)
+    private IEnumerator GetJoke()
     {
-        using (UnityWebRequest req = UnityWebRequest.Get(url))
+        using (UnityWebRequest req = UnityWebRequest.Get(URL))
         {
             yield return req.SendWebRequest();
 
             if (req.result != UnityWebRequest.Result.Success)
             {
-                Debug.LogError("Error API: " + req.error);
-                onResult?.Invoke("Error al obtener chiste");
+                Debug.LogError("Error: " + req.error);
+                yield break;
             }
-            else
+
+            string json = req.downloadHandler.text;
+
+            ChuckNorrisData data =
+                JsonConvert.DeserializeObject<ChuckNorrisData>(json);
+
+            jokeText.text = data.value;
+
+            jokeCanvas.SetActive(true);
+
+            yield return StartCoroutine(LoadImage(data.icon_url));
+
+            if (hideCoroutine != null)
             {
-                string json = req.downloadHandler.text;
-
-                ChuckNorrisData data =
-                    JsonConvert.DeserializeObject<ChuckNorrisData>(json);
-
-                onResult?.Invoke(data.value);
+                StopCoroutine(hideCoroutine);
             }
-        }
 
+            hideCoroutine = StartCoroutine(HideCanvas());
+        }
+    }
+
+    private IEnumerator LoadImage(string imageUrl)
+    {
+        using (UnityWebRequest req = UnityWebRequestTexture.GetTexture(imageUrl))
+        {
+            yield return req.SendWebRequest();
+
+            if (req.result != UnityWebRequest.Result.Success)
+            {
+                Debug.LogError("Error al cargar imagen: " + req.error);
+                yield break;
+            }
+
+            Texture2D texture = DownloadHandlerTexture.GetContent(req);
+
+            Sprite sprite = Sprite.Create(
+                texture,
+                new Rect(0, 0, texture.width, texture.height),
+                new Vector2(0.5f, 0.5f)
+            );
+
+            jokeImage.sprite = sprite;
+        }
+    }
+
+    private IEnumerator HideCanvas()
+    {
+        yield return new WaitForSeconds(visibleTime);
+
+        jokeCanvas.SetActive(false);
+        instrusionText.gameObject.SetActive(true);
     }
 }
 
@@ -46,4 +103,5 @@ public class ChuckNorris : MonoBehaviour
 public class ChuckNorrisData
 {
     public string value;
+    public string icon_url;
 }
