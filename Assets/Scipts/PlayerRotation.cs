@@ -3,19 +3,41 @@ using System.Collections.Generic;
 using UnityEngine;
 using Photon.Pun;
 
-public class PlayerRotation : MonoBehaviourPun
+public class PlayerRotation : MonoBehaviourPun, IPunObservable
 {
+    float angle;
+
     void Update()
     {
-        // Si no es mi personaje, no leemos el mouse de esta pantalla
-        if (!photonView.IsMine) return;
+        if (photonView.IsMine)
+        {
+            Vector3 mouseWorld = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+            mouseWorld.z = 0f;
 
-        Vector3 mouseWorld = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-        mouseWorld.z = 0f;
+            Vector2 dir = mouseWorld - transform.position;
+            angle = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg;
 
-        Vector2 direction = mouseWorld - transform.position;
-        float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
+            transform.rotation = Quaternion.Euler(0, 0, angle);
+        }
+        else
+        {
+            transform.rotation = Quaternion.Lerp(
+                transform.rotation,
+                Quaternion.Euler(0, 0, angle),
+                Time.deltaTime * 12f
+            );
+        }
+    }
 
-        transform.rotation = Quaternion.Euler(0f, 0f, angle);
+    public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
+    {
+        if (stream.IsWriting)
+        {
+            stream.SendNext(angle);
+        }
+        else
+        {
+            angle = (float)stream.ReceiveNext();
+        }
     }
 }
