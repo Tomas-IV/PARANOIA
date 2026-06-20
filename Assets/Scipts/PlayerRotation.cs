@@ -7,14 +7,9 @@ public class PlayerRotation : MonoBehaviourPun
 {
     void Update()
     {
-        //  Si este personaje NO es el mío, frenamos acá. 
-        // Esto evita que tu mouse controle al rival.
-        if (!photonView.IsMine)
-        {
-            return;
-        }
+        // Si no es mi personaje, no leemos el mouse de esta pantalla
+        if (!photonView.IsMine) return;
 
-        // Tu código original de rotación por mouse
         Vector3 mouseWorld = Camera.main.ScreenToWorldPoint(Input.mousePosition);
         mouseWorld.z = 0f;
 
