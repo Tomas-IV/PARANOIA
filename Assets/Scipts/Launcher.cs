@@ -130,6 +130,28 @@ public class Launcher : MonoBehaviourPunCallbacks
         MenuManager.Instance.OpenMenu("loading");
     }
 
+    public void QuitGame()
+    {
+        StartCoroutine(QuitRoutine());
+    }
+
+    private IEnumerator QuitRoutine()
+    {
+        if (PhotonNetwork.InRoom)
+            PhotonNetwork.LeaveRoom();
+
+        while (PhotonNetwork.InRoom)
+            yield return null;
+
+        if (PhotonNetwork.IsConnected)
+            PhotonNetwork.Disconnect();
+
+        while (PhotonNetwork.IsConnected)
+            yield return null;
+
+        Application.Quit();
+    }
+
     public void JoinRoom(RoomInfo info)
     {
         string nickname = nicknameInputField.text.Trim();
