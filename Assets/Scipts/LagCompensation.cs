@@ -4,7 +4,7 @@ using Photon.Pun;
 public class LagCompensation : MonoBehaviourPun, IPunObservable
 {
     private Vector2 networkPosition;
-    private float networkAngle; // Guardamos el angulo flotante en vez de un Quaternion
+    private Quaternion networkRotation; // Guarda la rotacion que viene de internet
 
     private Rigidbody2D rb;
     public float smoothingSpeed = 15f;
@@ -13,38 +13,37 @@ public class LagCompensation : MonoBehaviourPun, IPunObservable
     {
         rb = GetComponent<Rigidbody2D>();
         networkPosition = transform.position;
-        networkAngle = rb.rotation;
+        networkRotation = transform.rotation;
     }
 
     private void FixedUpdate()
     {
-        // Si NO es mi personaje (es el rival azul)
+        // Si NO es mi personaje (es el rival azul), aplicamos la interpolacion
         if (!photonView.IsMine)
         {
-            // 1. Desplazamiento fluido (Posicion)
+            // 1. Suavizamos el desplazamiento (Posicion)
             Vector2 lerpedPosition = Vector2.Lerp(rb.position, networkPosition, Time.fixedDeltaTime * smoothingSpeed);
             rb.MovePosition(lerpedPosition);
 
-            // 2. Giro fluido (Rotacion) usando la fisica de Unity para 2D
-            float lerpedAngle = Mathf.LerpAngle(rb.rotation, networkAngle, Time.fixedDeltaTime * smoothingSpeed);
-            rb.MoveRotation(lerpedAngle);
+            // 2. Suavizamos el giro (Rotacion) para que veas al rival apuntar
+            transform.rotation = Quaternion.Lerp(transform.rotation, networkRotation, Time.fixedDeltaTime * smoothingSpeed);
         }
     }
 
-    // El tubo de red de Photon
+    // Este es el tubo de red de Photon que manda y recibe los datos constantemente
     public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
     {
         if (stream.IsWriting)
         {
-            // Si el personaje es tuyo, mandas posicion y angulo actual
+            // Si el personaje es tuyo (rojo), mandas tu posicion y tu rotacion actual a la red
             stream.SendNext(rb.position);
-            stream.SendNext(transform.eulerAngles.z); // Mandamos el angulo real de tu pantalla
+            stream.SendNext(transform.rotation);
         }
         else
         {
-            // Si es el rival, recibis los datos en el mismo orden exacto
+            // Si es el rival (azul), lees su posicion y su rotacion en el mismo orden exacto
             networkPosition = (Vector2)stream.ReceiveNext();
-            networkAngle = (float)stream.ReceiveNext();
+            networkRotation = (Quaternion)stream.ReceiveNext();
         }
     }
 }
