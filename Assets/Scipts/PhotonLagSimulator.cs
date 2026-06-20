@@ -1,18 +1,33 @@
-using UnityEngine;
 using Photon.Pun;
+using Photon.Pun.UtilityScripts;
+using Photon.Realtime;
+using UnityEngine;
 
 public class PhotonLagSimulator : MonoBehaviour
 {
     private bool simuladorActivo = false;
     private static PhotonLagSimulator instancia;
+    private PhotonLagSimulationGui ventanaGrafica;
 
     void Awake()
     {
-        // Sistema Singleton 
         if (instancia == null)
         {
             instancia = this;
-            DontDestroyOnLoad(gameObject); // Hace que sobreviva entre escenas
+            DontDestroyOnLoad(gameObject);
+
+            // Buscamos o agregamos el componente oficial de Photon para la ventana gris
+            ventanaGrafica = GetComponent<PhotonLagSimulationGui>();
+            if (ventanaGrafica == null)
+            {
+                ventanaGrafica = gameObject.AddComponent<PhotonLagSimulationGui>();
+            }
+
+            // Lo dejamos apagado al inicio usando la propiedad estándar 'enabled' en minúscula
+            if (ventanaGrafica != null)
+            {
+                ventanaGrafica.enabled = false;
+            }
         }
         else
         {
@@ -23,7 +38,6 @@ public class PhotonLagSimulator : MonoBehaviour
 
     void Update()
     {
-        // El simulador solo funcionará mientras pruebes el juego dentro del Editor de Unity
 #if UNITY_EDITOR
         if (Input.GetKeyDown(KeyCode.L))
         {
@@ -34,25 +48,21 @@ public class PhotonLagSimulator : MonoBehaviour
 
     private void ToggleLagSimulation()
     {
-     
         if (PhotonNetwork.NetworkingClient == null || PhotonNetwork.NetworkingClient.LoadBalancingPeer == null)
         {
-            Debug.LogWarning("Lag Simulator: No se puede activar porque no estás conectado a Photon todavía.");
+            Debug.LogWarning("Lag Simulator: No conectado a Photon todavía.");
             return;
         }
 
         simuladorActivo = !simuladorActivo;
 
-       
+        // 1. Activamos el lag interno de Photon
         PhotonNetwork.NetworkingClient.LoadBalancingPeer.IsSimulationEnabled = simuladorActivo;
 
-        if (simuladorActivo)
+        // 2. Encendemos o apagamos el cuadro gris usando 'enabled' en minúscula
+        if (ventanaGrafica != null)
         {
-            Debug.LogWarning("[LAG SIMULATOR] SIMULACIÓN ACTIVADA EN EL MENÚ. El lag afectará el emparejamiento y el gameplay.");
-        }
-        else
-        {
-            Debug.Log("[LAG SIMULATOR] SIMULACIÓN DESACTIVADA. Volviendo a red limpia.");
+            ventanaGrafica.enabled = simuladorActivo;
         }
     }
 }
