@@ -4,7 +4,6 @@ using Photon.Pun;
 
 public class GameplayChat : MonoBehaviourPun
 {
-    //  PROPIEDAD ESTÁTICA AGREGADA: Permite a otros scripts (como el LagSimulator) saber si estás escribiendo
     public static bool ChatActivo { get; private set; }
 
     private GameObject chatCanvasGO;
@@ -16,7 +15,6 @@ public class GameplayChat : MonoBehaviourPun
 
     void Start()
     {
-        // Inicializamos la propiedad al arrancar la escena
         ChatActivo = false;
 
         CrearInterfazDeChat();
@@ -45,17 +43,17 @@ public class GameplayChat : MonoBehaviourPun
     void AbrirChat()
     {
         estaEscribiendo = true;
-        ChatActivo = true; //  Cambia a true para que el simulador ignore la L
-        chatPanelGO.SetActive(true); // Muestra la caja para escribir
-        chatInputField.ActivateInputField(); // Pone el cursor adentro automáticamente
+        ChatActivo = true;
+        chatPanelGO.SetActive(true);
+        chatInputField.ActivateInputField();
     }
 
     void CerrarChat()
     {
         estaEscribiendo = false;
-        ChatActivo = false; //  Vuelve a false al cerrar, liberando la L
+        ChatActivo = false;
         chatInputField.text = "";
-        chatPanelGO.SetActive(false); // Oculta la caja para escribir
+        chatPanelGO.SetActive(false);
     }
 
     public void EnviarMensajeDeChat()
@@ -65,7 +63,6 @@ public class GameplayChat : MonoBehaviourPun
 
         string mensajeFormateado = miNombre + ": " + chatInputField.text;
 
-        // Enviamos el mensaje por red a todos los jugadores
         photonView.RPC("RecibirMensajeGameplay", RpcTarget.All, mensajeFormateado);
     }
 
@@ -78,32 +75,27 @@ public class GameplayChat : MonoBehaviourPun
         }
     }
 
-    //  ESTA FUNCIÓN CONSTRUYE TODO EL CANVAS Y LOS COMPONENTES DE TEXTO EN TIEMPO DE EJECUCIÓN
     private void CrearInterfazDeChat()
     {
-        // 1. Crear el Canvas Principal
         chatCanvasGO = new GameObject("ChatCanvas", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
         Canvas canvas = chatCanvasGO.GetComponent<Canvas>();
         canvas.renderMode = RenderMode.ScreenSpaceOverlay;
 
-        // Asegurar que exista un EventSystem en la escena para que el InputField responda al teclado
         if (FindObjectOfType<UnityEngine.EventSystems.EventSystem>() == null)
         {
             new GameObject("EventSystem", typeof(UnityEngine.EventSystems.EventSystem), typeof(UnityEngine.EventSystems.StandaloneInputModule));
         }
 
-        // ...
-        // 2. Crear el Historial de Mensajes (UI Text) - Siempre visible en pantalla
+
         GameObject textGO = new GameObject("ChatDisplay", typeof(Text));
         textGO.transform.SetParent(chatCanvasGO.transform, false);
 
         RectTransform textRect = textGO.GetComponent<RectTransform>();
-        // Eliminar o comentar la siguiente línea incorrecta:
-        // textRect.alignment = TextAnchor.LowerLeft;
+
         textRect.anchorMin = new Vector2(0f, 0f);
         textRect.anchorMax = new Vector2(0f, 0f);
         textRect.pivot = new Vector2(0f, 0f);
-        textRect.anchoredPosition = new Vector2(20f, 70f); // Posicionado arriba del input
+        textRect.anchoredPosition = new Vector2(20f, 70f); 
         textRect.sizeDelta = new Vector2(400f, 200f);
 
         chatDisplayData = textGO.GetComponent<Text>();
@@ -111,9 +103,7 @@ public class GameplayChat : MonoBehaviourPun
         chatDisplayData.fontSize = 16;
         chatDisplayData.color = Color.white;
         chatDisplayData.alignment = TextAnchor.LowerLeft;
-        // ...
-
-        // Añadir una sombra negra sutil al texto para que se lea bien en cualquier mapa
+    
         textGO.AddComponent<Shadow>().effectColor = Color.black;
 
 
@@ -129,7 +119,6 @@ public class GameplayChat : MonoBehaviourPun
 
         chatPanelGO.GetComponent<Image>().color = new Color(0f, 0f, 0f, 0.5f); // Fondo gris transparente
 
-        // 4. Crear el InputField adentro del Panel
         GameObject inputGO = new GameObject("ChatInputField", typeof(InputField), typeof(Image));
         inputGO.transform.SetParent(chatPanelGO.transform, false);
 
@@ -138,7 +127,6 @@ public class GameplayChat : MonoBehaviourPun
         inputRect.sizeDelta = new Vector2(340f, 25f);
         inputGO.GetComponent<Image>().color = new Color(1f, 1f, 1f, 0.1f);
 
-        // Texto que se escribe dentro del InputField
         GameObject textInputGO = new GameObject("Text", typeof(Text));
         textInputGO.transform.SetParent(inputGO.transform, false);
         RectTransform textInputRect = textInputGO.GetComponent<RectTransform>();

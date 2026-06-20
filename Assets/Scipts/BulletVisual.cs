@@ -16,11 +16,7 @@ public class BulletVisual : MonoBehaviourPun
 
     private void Update()
     {
-        transform.position = Vector3.MoveTowards(
-            transform.position,
-            target,
-            speed * Time.deltaTime
-        );
+        transform.position = Vector3.MoveTowards(transform.position,target,speed * Time.deltaTime);
 
         if (Vector3.Distance(transform.position, target) < 0.05f)
         {

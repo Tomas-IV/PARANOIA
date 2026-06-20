@@ -36,12 +36,7 @@ public class PlayerWeapon : MonoBehaviourPun
         Vector2 origin = firePoint.position;
         Vector2 direction = reference.right;
 
-        RaycastHit2D hit = Physics2D.Raycast(
-            origin,
-            direction,
-            range,
-            hitMask
-        );
+        RaycastHit2D hit = Physics2D.Raycast(origin,direction,range,hitMask);
 
         Vector2 hitPoint;
 
@@ -53,13 +48,7 @@ public class PlayerWeapon : MonoBehaviourPun
             {
                 if (target.Team != playerManager.Team)
                 {
-                    photonView.RPC(
-                        nameof(RPC_RequestDamage),
-                        RpcTarget.MasterClient,
-                        target.photonView.ViewID,
-                        damage,
-                        playerManager.Team
-                    );
+                    photonView.RPC(nameof(RPC_RequestDamage),RpcTarget.MasterClient,target.photonView.ViewID,damage,playerManager.Team);
                 }
             }
         }
@@ -68,16 +57,9 @@ public class PlayerWeapon : MonoBehaviourPun
             hitPoint = origin + direction * range;
         }
 
-        // Mi propia bala visual
         SpawnBulletFX(origin, hitPoint);
 
-        // Bala visual para los demás jugadores
-        photonView.RPC(
-            nameof(RPC_PlayBulletFX),
-            RpcTarget.Others,
-            origin,
-            hitPoint
-        );
+        photonView.RPC(nameof(RPC_PlayBulletFX),RpcTarget.Others,origin,hitPoint);
     }
 
     private void SpawnBulletFX(Vector2 origin, Vector2 hitPoint)
@@ -96,10 +78,7 @@ public class PlayerWeapon : MonoBehaviourPun
     }
 
     [PunRPC]
-    private void RPC_RequestDamage(
-        int targetViewID,
-        int damage,
-        int attackerTeam)
+    private void RPC_RequestDamage(int targetViewID,int damage,int attackerTeam)
     {
         PhotonView view = PhotonView.Find(targetViewID);
 

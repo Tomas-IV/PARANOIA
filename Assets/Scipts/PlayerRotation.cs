@@ -7,7 +7,6 @@ public class PlayerRotation : MonoBehaviourPun
 {
     void Update()
     {
-        // Solo el dueño del personaje calcula la rotación
         if (!photonView.IsMine)
             return;
 

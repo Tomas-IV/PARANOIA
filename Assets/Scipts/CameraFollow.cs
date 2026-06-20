@@ -19,10 +19,6 @@ public class CameraFollow : MonoBehaviour
     {
         if (target == null) return;
 
-        transform.position = Vector3.Lerp(
-            transform.position,
-            target.position + offset,
-            smooth * Time.deltaTime
-        );
+        transform.position = Vector3.Lerp(transform.position,target.position + offset,smooth * Time.deltaTime);
     }
 }

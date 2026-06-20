@@ -4,6 +4,7 @@ using UnityEngine;
 using Photon.Pun;
 using Photon.Realtime;
 using Hashtable = ExitGames.Client.Photon.Hashtable;
+using UnityEngine.SceneManagement;
 
 public class GameManager : MonoBehaviourPunCallbacks
 {
@@ -36,6 +37,14 @@ public class GameManager : MonoBehaviourPunCallbacks
     private void Start()
     {
         TryStartMatch();
+    }
+
+    private void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            LeaveGame();
+        }
     }
 
     public override void OnJoinedRoom()
@@ -83,9 +92,7 @@ public class GameManager : MonoBehaviourPunCallbacks
         gameStarted = true;
 
         photonView.RPC(
-            nameof(RPC_SetGameState),
-            RpcTarget.AllBuffered,
-            GameState.Playing);
+            nameof(RPC_SetGameState),RpcTarget.AllBuffered,GameState.Playing);
 
         Debug.Log("[GameManager] Match Started");
     }
@@ -156,10 +163,7 @@ public class GameManager : MonoBehaviourPunCallbacks
 
     private void EndGame()
     {
-        photonView.RPC(
-            nameof(RPC_EndGame),
-            RpcTarget.All,
-            winnerTeam);
+        photonView.RPC(nameof(RPC_EndGame),RpcTarget.All,winnerTeam);
     }
 
     [PunRPC]
@@ -185,6 +189,27 @@ public class GameManager : MonoBehaviourPunCallbacks
             while (PhotonNetwork.InRoom)
                 yield return null;
         }
+
+        PhotonNetwork.LoadLevel(0);
+    }
+
+    private void LeaveGame()
+    {
+        if (!PhotonNetwork.InRoom)
+        {
+            SceneManager.LoadScene(0);
+            return;
+        }
+
+        StartCoroutine(LeaveRoomRoutine());
+    }
+
+    private IEnumerator LeaveRoomRoutine()
+    {
+        PhotonNetwork.LeaveRoom();
+
+        while (PhotonNetwork.InRoom)
+            yield return null;
 
         PhotonNetwork.LoadLevel(0);
     }

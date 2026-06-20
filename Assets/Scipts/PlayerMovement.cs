@@ -6,7 +6,7 @@ public class PlayerMovement : MonoBehaviourPun
     public float speed = 5f;
     private Rigidbody2D rb;
     private Vector2 moveInput;
-    private bool canMove = true; // Variable interna que usa PlayerManager
+    private bool canMove = true;
 
     void Start()
     {
@@ -17,7 +17,6 @@ public class PlayerMovement : MonoBehaviourPun
     {
         if (!photonView.IsMine) return;
 
-        // Si el chat esta activo O el PlayerManager te desactivo el movimiento, nos frenamos
         if (GameplayChat.ChatActivo || !canMove)
         {
             moveInput = Vector2.zero;
@@ -42,7 +41,6 @@ public class PlayerMovement : MonoBehaviourPun
         rb.velocity = moveInput * speed;
     }
 
-    // Esta es la funcion que te pide el PlayerManager para solucionar el error de la imagen
     public void SetCanMove(bool state)
     {
         canMove = state;

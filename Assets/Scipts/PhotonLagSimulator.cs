@@ -37,7 +37,7 @@ public class PhotonLagSimulator : MonoBehaviour
     void Update()
     {
 #if UNITY_EDITOR
-        // Si el chat del gameplay está activo en la partida, ignoramos por completo la tecla L
+
         if (GameplayChat.ChatActivo)
         {
             return;
