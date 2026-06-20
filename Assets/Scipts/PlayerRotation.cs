@@ -8,7 +8,7 @@ public class PlayerRotation : MonoBehaviourPun
     void Update()
     {
         // Si no es mi personaje, no leemos el mouse de esta pantalla
-        //if (!photonView.IsMine) return;
+        if (!photonView.IsMine) return;
 
         Vector3 mouseWorld = Camera.main.ScreenToWorldPoint(Input.mousePosition);
         mouseWorld.z = 0f;
