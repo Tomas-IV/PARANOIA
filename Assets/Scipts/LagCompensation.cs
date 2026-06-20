@@ -6,22 +6,25 @@ using Photon.Pun;
 public class LagCompensation : MonoBehaviourPun, IPunObservable
 {
     private Vector2 networkPosition;
+    private float networkRotation;
+
     private Rigidbody2D rb;
     public float smoothingSpeed = 15f;
 
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
-        networkPosition = transform.position;
+        networkPosition = rb.position;
     }
 
-    private void FixedUpdate()
+    void FixedUpdate()
     {
-        // Si es el rival, suavizamos su posición para ganarle al lag
         if (!photonView.IsMine)
         {
             Vector2 lerpedPosition = Vector2.Lerp(rb.position, networkPosition, Time.fixedDeltaTime * smoothingSpeed);
             rb.MovePosition(lerpedPosition);
+
+            rb.MoveRotation(Mathf.LerpAngle(rb.rotation, networkRotation, Time.fixedDeltaTime * smoothingSpeed));
         }
     }
 
@@ -29,11 +32,13 @@ public class LagCompensation : MonoBehaviourPun, IPunObservable
     {
         if (stream.IsWriting)
         {
-            stream.SendNext(rb.position); // Enviamos nuestra posición
+            stream.SendNext(rb.position);
+            stream.SendNext(rb.rotation);
         }
         else
         {
-            networkPosition = (Vector2)stream.ReceiveNext(); // Recibimos la posición del rival
+            networkPosition = (Vector2)stream.ReceiveNext();
+            networkRotation = (float)stream.ReceiveNext();
         }
     }
 }
