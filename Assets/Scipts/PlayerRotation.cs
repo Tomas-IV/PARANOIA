@@ -8,6 +8,10 @@ public class PlayerRotation : MonoBehaviourPun
 
     void Update()
     {
+        if (!photonView.IsMine)
+        {
+            return;
+        }
         Vector3 mouseWorld = Camera.main.ScreenToWorldPoint(Input.mousePosition);
         mouseWorld.z = 0f;
 
