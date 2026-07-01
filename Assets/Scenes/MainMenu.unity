@@ -3561,11 +3561,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4ce0f15839349db499a5d8910b412918, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  datosDelJugador:
-    lastNickname: 
-    lastAvatarIndex: 0
-    matchesWon: 0
-    matchesLost: 0
+  datosDelJuego:
+    nicknameJugador1: Jugador 1
+    nicknameJugador2: Jugador 2
+    maxWavesSurvived: 0
+    totalZombiesKilled: 0
+  inputP1: {fileID: 0}
+  inputP2: {fileID: 0}
+  textoOleadaRecord: {fileID: 0}
+  textoZombiesTotales: {fileID: 0}
 --- !u!4 &1752212855
 Transform:
   m_ObjectHideFlags: 0
