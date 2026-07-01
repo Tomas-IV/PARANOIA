@@ -1,89 +1,95 @@
 using UnityEngine;
 using System.IO;
-using UnityEngine.UI; // <-- IMPORTANTE: Para poder usar Text e InputField
-using TMPro;         // <-- Descomentá esto si usás TextMeshPro en vez de Text tradicional
+using TMPro; // Usamos TextMeshPro para los textos del menú
 
+// --- LA ESTRUCTURA DE DATOS QUE SE GUARDA ---
 [System.Serializable]
 public class PlayerData
 {
-    public string lastNickname = "";
-    public int lastAvatarIndex = 0;
-    public int matchesWon = 0;
-    public int matchesLost = 0;
+    public string nicknameJugador1 = "Jugador 1";
+    public string nicknameJugador2 = "Jugador 2";
+    public int maxWavesSurvived = 0;   // Récord de oleadas sobrevivientes
+    public int totalZombiesKilled = 0; // Total acumulado de zombis muertos
 }
 
+// --- EL MANEJADOR PRINCIPAL (VA SOLO EN EL MAIN MENU) ---
 public class SaveManager : MonoBehaviour
 {
     [Header("Datos en Memoria")]
-    public PlayerData datosDelJugador = new PlayerData();
+    public PlayerData datosDelJuego = new PlayerData();
 
-    [Header("Componentes de UI del Menú")]
-    public TMP_InputField inputFieldNickname; // Cambiá a 'InputField' si no usás TextMeshPro
-    public TMP_Text textoGanadas;             // Cambiá a 'Text' si no usás TextMeshPro
-    public TMP_Text textoPerdidas;            // Cambiá a 'Text' si no usás TextMeshPro
+    [Header("UI del Main Menu (Asignar aquí)")]
+    public TMP_InputField inputP1;
+    public TMP_InputField inputP2;
+    public TMP_Text textoOleadaRecord;
+    public TMP_Text textoZombiesTotales;
 
     private string rutaArchivo;
 
     private void Awake()
     {
-        rutaArchivo = Path.Combine(Application.persistentDataPath, "historial_pvp.json");
+        // 1. Esto hace que el objeto viaje del Menú al Game sin borrarse
+        DontDestroyOnLoad(gameObject);
+
+        // 2. Definimos la ruta del archivo .json en la PC
+        rutaArchivo = Path.Combine(Application.persistentDataPath, "progreso_zombies.json");
+
+        // 3. Cargamos los datos guardados y actualizamos la pantalla del menú
         CargarDatos();
-
-        // APENAS ARRANCA EL JUEGO: Mostramos los datos cargados en la pantalla
-        ActualizarInterfazGrafica();
+        ActualizarInterfazMenu();
     }
 
-    public void ActualizarInterfazGrafica()
+    // Muestra los datos del JSON en los textos de tu menú principal
+    public void ActualizarInterfazMenu()
     {
-        // 1. Ponemos el último nickname en el cuadro de texto para que no tenga que escribirlo de nuevo
-        if (inputFieldNickname != null)
-            inputFieldNickname.text = datosDelJugador.lastNickname;
+        if (inputP1 != null) inputP1.text = datosDelJuego.nicknameJugador1;
+        if (inputP2 != null) inputP2.text = datosDelJuego.nicknameJugador2;
 
-        // 2. Mostramos el historial de victorias y derrotas en los textos del menú
-        if (textoGanadas != null)
-            textoGanadas.text = "Ganadas: " + datosDelJugador.matchesWon;
+        if (textoOleadaRecord != null)
+            textoOleadaRecord.text = "Máxima Oleada Lograda: " + datosDelJuego.maxWavesSurvived;
 
-        if (textoPerdidas != null)
-            textoPerdidas.text = "Perdidas: " + datosDelJugador.matchesLost;
+        if (textoZombiesTotales != null)
+            textoZombiesTotales.text = "Total Zombis Eliminados: " + datosDelJuego.totalZombiesKilled;
     }
 
-    // Cuando el jugador cambia el texto de su nombre en el menú, guardamos ese cambio
-    public void ActualizarNicknameDesdeUI()
-    {
-        if (inputFieldNickname != null)
-        {
-            datosDelJugador.lastNickname = inputFieldNickname.text;
-            GuardarDatos();
-        }
-    }
-
-    [ContextMenu("Guardar Datos")]
+    // --- GUARDAR DATOS (Escribe el archivo JSON en la PC) ---
     public void GuardarDatos()
     {
-        try
+        // Guardamos los nombres actuales de los inputs antes de escribir el archivo
+        if (inputP1 != null) datosDelJuego.nicknameJugador1 = inputP1.text;
+        if (inputP2 != null) datosDelJuego.nicknameJugador2 = inputP2.text;
+
+        string textoJson = JsonUtility.ToJson(datosDelJuego, true); //
+
+        // Usamos StreamWriter con bloque 'using' como en el video
+        using (StreamWriter writer = new StreamWriter(rutaArchivo))
         {
-            string textoJson = JsonUtility.ToJson(datosDelJugador, true);
-            File.WriteAllText(rutaArchivo, textoJson);
-            Debug.Log("Datos guardados con éxito.");
+            writer.Write(textoJson);
         }
-        catch (System.Exception e) { Debug.LogError("Error al guardar: " + e.Message); }
+        Debug.Log("Progreso guardado en: " + rutaArchivo);
     }
 
-    [ContextMenu("Cargar Datos")]
+    // --- CARGAR DATOS (Lee el archivo JSON de la PC) ---
     public void CargarDatos()
     {
         if (File.Exists(rutaArchivo))
         {
-            try
+            string textoJson = "";
+
+            // Usamos StreamReader con bloque 'using' para leer
+            using (StreamReader reader = new StreamReader(rutaArchivo))
             {
-                string textoJson = File.ReadAllText(rutaArchivo);
-                datosDelJugador = JsonUtility.FromJson<PlayerData>(textoJson);
+                textoJson = reader.ReadToEnd(); //
             }
-            catch (System.Exception e) { Debug.LogError("Error al cargar: " + e.Message); }
+
+            // Convertimos el texto de vuelta a variables
+            datosDelJuego = JsonUtility.FromJson<PlayerData>(textoJson); //
+            Debug.Log("Datos cargados correctamente.");
         }
         else
         {
-            datosDelJugador = new PlayerData();
+            Debug.Log("No hay archivo previo. Iniciando datos en limpio.");
+            datosDelJuego = new PlayerData();
         }
     }
 }
