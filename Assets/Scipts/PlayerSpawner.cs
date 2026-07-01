@@ -5,11 +5,11 @@ using Photon.Pun;
 
 public class PlayerSpawner : MonoBehaviourPunCallbacks
 {
-    [SerializeField] private GameObject playerPrefab;
-    [SerializeField] private Transform[] spawnPositions;
-    //[SerializeField] private List<Transform> spawnPositions = new List<Transform>();
+    [SerializeField] private GameObject[] playerPrefabs;
 
-    bool spawned = false;
+    [SerializeField] private Transform[] spawnPositions;
+
+    bool spawned;
 
     void Start()
     {
@@ -31,6 +31,20 @@ public class PlayerSpawner : MonoBehaviourPunCallbacks
         int index = PhotonNetwork.LocalPlayer.ActorNumber - 1;
         Transform spawn = spawnPositions[index % spawnPositions.Length];
 
-        PhotonNetwork.Instantiate(playerPrefab.name,spawn.position,Quaternion.identity);
+        GameObject prefab = GetPlayerPrefab();
+
+        PhotonNetwork.Instantiate(prefab.name,spawn.position,Quaternion.identity);
+    }
+
+    private GameObject GetPlayerPrefab()
+    {
+        int avatar = (int)PlayerInfo.GetAvatar(PhotonNetwork.LocalPlayer);
+
+        if (avatar < 0 || avatar >= playerPrefabs.Length)
+        {
+            return playerPrefabs[0];
+        }
+
+        return playerPrefabs[avatar];
     }
 }

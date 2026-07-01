@@ -69,18 +69,25 @@ public class Launcher : MonoBehaviourPunCallbacks
         nicknameInputField.text = PhotonNetwork.NickName;
     }
 
-
-    public void CreateRoom()
+    public void SetNickname()
     {
         string nickname = nicknameInputField.text.Trim();
 
-        if (!string.IsNullOrEmpty(nickname))
-        {
-            PhotonNetwork.NickName = nickname;
+        if (string.IsNullOrEmpty(nickname))
+            return;
 
-            PlayerPrefs.SetString("Nickname", nickname);
-            PlayerPrefs.Save();
-        }
+        PhotonNetwork.NickName = nickname;
+
+        PlayerPrefs.SetString("Nickname", nickname);
+        PlayerPrefs.Save();
+
+        Debug.Log("Nickname guardado: " + nickname);
+    }
+
+
+    public void CreateRoom()
+    {
+        SetNickname();
 
         if (string.IsNullOrEmpty(roomNameInputField.text))
         {
@@ -154,15 +161,7 @@ public class Launcher : MonoBehaviourPunCallbacks
 
     public void JoinRoom(RoomInfo info)
     {
-        string nickname = nicknameInputField.text.Trim();
-
-        if (!string.IsNullOrEmpty(nickname))
-        {
-            PhotonNetwork.NickName = nickname;
-
-            PlayerPrefs.SetString("Nickname", nickname);
-            PlayerPrefs.Save();
-        }
+        SetNickname();
 
         PhotonNetwork.JoinRoom(info.Name);
         MenuManager.Instance.OpenMenu("loading");
@@ -215,20 +214,20 @@ public class Launcher : MonoBehaviourPunCallbacks
         }
     }
 
-    public void SetNickname()
-    {
-        string nickname = nicknameInputField.text.Trim();
+    //public void SetNickname()
+    //{
+    //    string nickname = nicknameInputField.text.Trim();
 
-        if (string.IsNullOrEmpty(nickname))
-            return;
+    //    if (string.IsNullOrEmpty(nickname))
+    //        return;
 
-        PhotonNetwork.NickName = nickname;
+    //    PhotonNetwork.NickName = nickname;
 
-        PlayerPrefs.SetString("Nickname", nickname);
-        PlayerPrefs.Save();
+    //    PlayerPrefs.SetString("Nickname", nickname);
+    //    PlayerPrefs.Save();
 
-        Debug.Log("Nickname guardado: " + nickname);
-    }
+    //    Debug.Log("Nickname guardado: " + nickname);
+    //}
 
     public override void OnRoomListUpdate(List<RoomInfo> roomList)
     {

@@ -14,7 +14,8 @@ public class GameManager : MonoBehaviourPunCallbacks
     {
         WaitingPlayers,
         Playing,
-        EndGame
+        Victory,
+        Defeat
     }
 
     [SerializeField] private int minPlayers = 2;
@@ -24,7 +25,6 @@ public class GameManager : MonoBehaviourPunCallbacks
     public List<PlayerManager> Players { get; } = new();
 
     private bool gameStarted;
-    private int winnerTeam = -1;
 
     private void Awake()
     {
@@ -38,7 +38,11 @@ public class GameManager : MonoBehaviourPunCallbacks
     {
         TryStartMatch();
     }
-
+    public override void OnPlayerEnteredRoom(Player newPlayer)
+    {
+        TryStartMatch();
+    }
+     
     private void Update()
     {
         if (Input.GetKeyDown(KeyCode.Escape))
@@ -52,16 +56,12 @@ public class GameManager : MonoBehaviourPunCallbacks
         TryStartMatch();
     }
 
-    public override void OnPlayerEnteredRoom(Player newPlayer)
-    {
-        TryStartMatch();
-    }
 
     public override void OnPlayerLeftRoom(Player otherPlayer)
     {
         if (PhotonNetwork.IsMasterClient)
         {
-            CheckWinCondition();
+            //CheckWinCondition();
         }
     }
 
@@ -69,7 +69,7 @@ public class GameManager : MonoBehaviourPunCallbacks
     {
         if (PhotonNetwork.IsMasterClient)
         {
-            CheckWinCondition();
+            //CheckWinCondition();
         }
     }
 
@@ -87,12 +87,9 @@ public class GameManager : MonoBehaviourPunCallbacks
         if (PhotonNetwork.CurrentRoom.PlayerCount < minPlayers)
             return;
 
-        AssignTeams();
-
         gameStarted = true;
 
-        photonView.RPC(
-            nameof(RPC_SetGameState),RpcTarget.AllBuffered,GameState.Playing);
+        photonView.RPC(nameof(RPC_SetGameState),RpcTarget.AllBuffered,GameState.Playing);
 
         Debug.Log("[GameManager] Match Started");
     }
@@ -102,81 +99,107 @@ public class GameManager : MonoBehaviourPunCallbacks
     {
         CurrentState = state;
     }
-
-    private void AssignTeams()
+    
+    [PunRPC]
+    private void RPC_Victory()
     {
-        Player[] players = PhotonNetwork.PlayerList;
-
-        for (int i = 0; i < players.Length; i++)
-        {
-            int team = i % 2;
-
-            Hashtable props = new Hashtable();
-            props["team"] = team;
-
-            players[i].SetCustomProperties(props);
-
-            Debug.Log($"[GameManager] {players[i].NickName} assigned to Team {team}");
-        }
-
-        Debug.Log("[GameManager] Teams Assigned");
+        CurrentState = GameState.Victory;
+        Debug.Log("VICTORY");
+        StartCoroutine(ReturnToLobby());
     }
 
-    public int GetPlayerTeam(Player player)
-    {
-        if (player.CustomProperties.TryGetValue("team", out object team))
-            return (int)team;
-
-        return -1;
-    }
-
-    public void CheckWinCondition()
+    public void Defeat()
     {
         if (!PhotonNetwork.IsMasterClient)
-            return;
-
-        bool team0Alive = false;
-        bool team1Alive = false;
-
-        foreach (PlayerManager player in Players)
         {
-            if (player == null)
-                continue;
-
-            if (player.LifeState != PlayerManager.PlayerLifeState.Alive)
-                continue;
-
-            if (player.Team == 0)
-                team0Alive = true;
-
-            if (player.Team == 1)
-                team1Alive = true;
+            return;
         }
 
-        if (team0Alive && team1Alive)
-            return;
-
-        winnerTeam = team0Alive ? 0 : 1;
-
-        EndGame();
-    }
-
-    private void EndGame()
-    {
-        photonView.RPC(nameof(RPC_EndGame),RpcTarget.All,winnerTeam);
+        photonView.RPC(nameof(RPC_Defeat), RpcTarget.All);
     }
 
     [PunRPC]
-    private void RPC_EndGame(int winningTeam)
+    private void RPC_Defeat()
     {
-        winnerTeam = winningTeam;
-
-        CurrentState = GameState.EndGame;
-
-        Debug.Log($"TEAM {winnerTeam} WINS");
-
+        CurrentState = GameState.Defeat;
+        Debug.Log("DEFEAT");
         StartCoroutine(ReturnToLobby());
     }
+
+    //private void AssignTeams()
+    //{
+    //    Player[] players = PhotonNetwork.PlayerList;
+
+    //    for (int i = 0; i < players.Length; i++)
+    //    {
+    //        int team = i % 2;
+
+    //        Hashtable props = new Hashtable();
+    //        props["team"] = team;
+
+    //        players[i].SetCustomProperties(props);
+
+    //        Debug.Log($"[GameManager] {players[i].NickName} assigned to Team {team}");
+    //    }
+
+    //    Debug.Log("[GameManager] Teams Assigned");
+    //}
+
+    //public int GetPlayerTeam(Player player)
+    //{
+    //    if (player.CustomProperties.TryGetValue("team", out object team))
+    //        return (int)team;
+
+    //    return -1;
+    //}
+
+    //public void CheckWinCondition()
+    //{
+    //    if (!PhotonNetwork.IsMasterClient)
+    //        return;
+
+    //    bool team0Alive = false;
+    //    bool team1Alive = false;
+
+    //    foreach (PlayerManager player in Players)
+    //    {
+    //        if (player == null)
+    //            continue;
+
+    //        if (player.LifeState != PlayerManager.PlayerLifeState.Alive)
+    //            continue;
+
+    //        if (player.Team == 0)
+    //            team0Alive = true;
+
+    //        if (player.Team == 1)
+    //            team1Alive = true;
+    //    }
+
+    //    if (team0Alive && team1Alive)
+    //        return;
+
+    //    winnerTeam = team0Alive ? 0 : 1;
+
+    //    EndGame();
+    //}
+
+    //private void EndGame()
+    //{
+    //    photonView.RPC(nameof(RPC_EndGame),RpcTarget.All,winnerTeam);
+    //}
+
+    //[PunRPC]
+    //private void RPC_EndGame(int winningTeam)
+    //{
+    //    winnerTeam = winningTeam;
+
+    //    CurrentState = GameState.EndGame;
+
+    //    Debug.Log($"TEAM {winnerTeam} WINS");
+
+    //    StartCoroutine(ReturnToLobby());
+    //}
 
     private IEnumerator ReturnToLobby()
     {

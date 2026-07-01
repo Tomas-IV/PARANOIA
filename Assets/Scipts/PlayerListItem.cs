@@ -16,6 +16,12 @@ public class PlayerListItem : MonoBehaviourPunCallbacks
         text.text = _player.NickName;
     }
 
+    //public override void OnPlayerPropertiesUpdate(Player targetPlayer, ExitGames.Client.Photon.Hashtable changedProps)
+    //{
+    //    if (targetPlayer != player)
+    //        return;
+    //}
+
     public override void OnPlayerLeftRoom(Player otherPlayer)
     {
         if (player == otherPlayer)

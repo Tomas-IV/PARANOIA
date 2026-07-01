@@ -44,5 +44,15 @@ public class PlayerMovement : MonoBehaviourPun
     public void SetCanMove(bool state)
     {
         canMove = state;
+
+        if (!canMove)
+        {
+            rb.velocity = Vector2.zero;
+        }
+    }
+
+    public bool CanMove()
+    {
+        return canMove;
     }
 }

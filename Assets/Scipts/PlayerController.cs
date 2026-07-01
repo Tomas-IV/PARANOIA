@@ -41,7 +41,7 @@ public class PlayerController : MonoBehaviourPunCallbacks
 
     private void HandleReviveInput()
     {
-        PlayerManager target = FindDownedAlly();
+        PlayerManager target = FindDownedPlayer();
 
         if (target == null)
         {
@@ -71,7 +71,7 @@ public class PlayerController : MonoBehaviourPunCallbacks
         }
     }
 
-    private PlayerManager FindDownedAlly()
+    private PlayerManager FindDownedPlayer()
     {
         foreach (PlayerManager player in GameManager.Instance.Players)
         {
@@ -79,9 +79,6 @@ public class PlayerController : MonoBehaviourPunCallbacks
                 continue;
 
             if (player == playerManager)
-                continue;
-
-            if (player.Team != playerManager.Team)
                 continue;
 
             if (!player.IsDowned())

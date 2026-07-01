@@ -46,10 +46,10 @@ public class PlayerWeapon : MonoBehaviourPun
 
             if (hit.collider.TryGetComponent(out PlayerManager target))
             {
-                if (target.Team != playerManager.Team)
-                {
-                    photonView.RPC(nameof(RPC_RequestDamage),RpcTarget.MasterClient,target.photonView.ViewID,damage,playerManager.Team);
-                }
+                //if (target.Team != playerManager.Team)
+                //{
+                //    photonView.RPC(nameof(RPC_RequestDamage),RpcTarget.MasterClient,target.photonView.ViewID,damage,playerManager.Team);
+                //}
             }
         }
         else
@@ -87,9 +87,9 @@ public class PlayerWeapon : MonoBehaviourPun
 
         PlayerManager target = view.GetComponent<PlayerManager>();
 
-        if (target != null)
-        {
-            target.TakeDamage(damage, attackerTeam);
-        }
+        //if (target != null)
+        //{
+        //    target.TakeDamage(damage, attackerTeam);
+        //}
     }
 }
