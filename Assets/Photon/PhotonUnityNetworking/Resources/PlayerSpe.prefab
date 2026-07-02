@@ -23,6 +23,7 @@ GameObject:
   - component: {fileID: 725183401465169581}
   - component: {fileID: -3619294283221143673}
   - component: {fileID: 7686899386016944536}
+  - component: {fileID: 4741201758021352886}
   m_Layer: 3
   m_Name: PlayerSpe
   m_TagString: Player
@@ -238,8 +239,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 496fe2a2b21176b4d885855fb5b66024, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  range: 10
-  damage: 20
   hitMask:
     serializedVersion: 2
     m_Bits: 8
@@ -386,6 +385,18 @@ MonoBehaviour:
     Max: 1000
     SpeedUpPerc: 5
   restartOnDeviceChange: 1
+--- !u!114 &4741201758021352886
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 124191237955447779}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 186647a1980025243b36dc9ca3d70cdd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &2260190742957034237
 GameObject:
   m_ObjectHideFlags: 0
