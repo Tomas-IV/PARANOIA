@@ -72,6 +72,8 @@ MonoBehaviour:
   - RPC_StartBeingRevived
   - RPC_StartReviveResult
   - RPC_AbrirPuertas
+  - RecibirDanioRed
+  - RPC_OtorgarBaja
   DisableAutoOpenWizard: 1
   ShowSettings: 0
   DevRegionSetOnce: 1

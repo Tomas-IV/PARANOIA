@@ -33,7 +33,6 @@ public class GestorScoreboard : MonoBehaviourPunCallbacks
 
     private void Start()
     {
-        // Iniciamos en 0 cifrado
         zombisMuertosCifrado = 0 ^ claveSecreta;
 
         CrearInterfazUnificadaTopRight();
@@ -44,7 +43,6 @@ public class GestorScoreboard : MonoBehaviourPunCallbacks
 
     private void Update()
     {
-        // Tecla H prende y apaga el cajón entero
         if (Input.GetKeyDown(KeyCode.H))
         {
             estaVisible = !estaVisible;
@@ -65,7 +63,6 @@ public class GestorScoreboard : MonoBehaviourPunCallbacks
         valorReal++;
         zombisMuertosCifrado = valorReal ^ claveSecreta;
 
-        // Le avisamos a la red de Photon cuántas bajas llevás en total
         Hashtable hash = new Hashtable();
         hash.Add("MisKills", valorReal);
         PhotonNetwork.LocalPlayer.SetCustomProperties(hash);
@@ -132,13 +129,29 @@ public class GestorScoreboard : MonoBehaviourPunCallbacks
             }
 
             string json = req.downloadHandler.text;
+
+            // Si te tira error de que falta ZombiePlayerData, asegurate de tener esa clase 
+            // al fondo de alguno de tus scripts (como estaba en el original).
             ZombiePlayerData[] listaTopJugadores = JsonConvert.DeserializeObject<ZombiePlayerData[]>(json);
 
-            if (listaTopJugadores != null && listaTopJugadores.Length >= 2)
+            if (listaTopJugadores != null && listaTopJugadores.Length > 0)
             {
-                textoRankingAPI.text = "\n[RANKING GLOBAL HISTÓRICO - API]\n" +
-                                       $"1. {listaTopJugadores[0].name} - {listaTopJugadores[0].id * 143} bajas\n" +
-                                       $"2. {listaTopJugadores[1].name} - {listaTopJugadores[1].id * 92} bajas";
+                string rankingTexto = "\n[RANKING GLOBAL HISTÓRICO - API]\n";
+
+                // Determinamos cuántos mostrar (queremos 4, pero si la API trae menos, nos adaptamos)
+                int cantidadAMostrar = Mathf.Min(listaTopJugadores.Length, 4);
+
+                // Multiplicadores falsos variados para simular distintos puntajes altos
+                int[] multiplicadores = { 143, 92, 78, 55 };
+
+                // Bucle para crear el top 4 automático
+                for (int i = 0; i < cantidadAMostrar; i++)
+                {
+                    int bajasSimuladas = listaTopJugadores[i].id * multiplicadores[i];
+                    rankingTexto += $"{i + 1}. {listaTopJugadores[i].name} - {bajasSimuladas} bajas\n";
+                }
+
+                textoRankingAPI.text = rankingTexto;
             }
         }
     }
