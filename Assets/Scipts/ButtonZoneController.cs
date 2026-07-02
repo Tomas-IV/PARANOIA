@@ -7,12 +7,28 @@ public class ButtonZoneController : MonoBehaviourPun
     [SerializeField] private DoorController puertaObjetivo;
 
     [Header("Configuracion de Equipo")]
-    [SerializeField] private int idBotonUnico;
+    [SerializeField, Tooltip("Asignar 1 o 2: cada botón debe tener un id distinto (1 y 2).")]
+    private int idBotonUnico = 1;
 
     [Header("Configuracion del Sensor")]
     [SerializeField] private Vector2 tamanoSensor = new Vector2(0.39f, 0.30f);
 
     private bool qEstaPresionada = false;
+
+    private void Awake()
+    {
+        if (puertaObjetivo == null)
+        {
+            Debug.LogWarning($"{name}: 'puertaObjetivo' no asignada. Asigna la misma instancia de DoorController en ambos botones.");
+        }
+    }
+
+    private void OnValidate()
+    {
+        // Forzar id válido (1 o 2) en el inspector
+        if (idBotonUnico < 1) idBotonUnico = 1;
+        if (idBotonUnico > 2) idBotonUnico = 2;
+    }
 
     private void Update()
     {
@@ -23,14 +39,12 @@ public class ButtonZoneController : MonoBehaviourPun
         {
             if (col.CompareTag("Player") || col.gameObject.name.Contains("PlayerSho") || col.gameObject.name.Contains("PlayerSpe"))
             {
-                // Buscamos el PhotonView en el objeto, y si está en un hijo, lo buscamos en el padre
                 PhotonView pv = col.GetComponent<PhotonView>();
                 if (pv == null)
                 {
                     pv = col.GetComponentInParent<PhotonView>();
                 }
 
-                // Si encontramos tu conexión, te damos permiso
                 if (pv != null && pv.IsMine)
                 {
                     miJugadorEstaAca = true;
@@ -39,7 +53,6 @@ public class ButtonZoneController : MonoBehaviourPun
             }
         }
 
-        // Si VOS estas parado encima y MANTENÉS apretada la Q
         if (miJugadorEstaAca && Input.GetKey(KeyCode.Q))
         {
             if (!qEstaPresionada)
@@ -48,7 +61,6 @@ public class ButtonZoneController : MonoBehaviourPun
                 if (puertaObjetivo != null) puertaObjetivo.ActualizarEstadoBoton(idBotonUnico, true);
             }
         }
-        // Si soltás la tecla, o si te movés fuera del botón
         else
         {
             if (qEstaPresionada)
