@@ -6,7 +6,7 @@ using UnityEngine.UI;
 using Photon.Pun;
 using Photon.Realtime;
 using Newtonsoft.Json;
-using Hashtable = ExitGames.Client.Photon.Hashtable; // Vital para usar propiedades de red
+using Hashtable = ExitGames.Client.Photon.Hashtable;
 
 public class GestorScoreboard : MonoBehaviourPunCallbacks
 {
@@ -19,8 +19,8 @@ public class GestorScoreboard : MonoBehaviourPunCallbacks
     // --- INTERFAZ ---
     private GameObject panelPrincipal;
     private Text textoMisBajas;
-    private Text textoRankingPhoton; // Acaban a ir tus amigos
-    private Text textoRankingAPI;    // Acá va la prueba de la API para el TP
+    private Text textoRankingPhoton;
+    private Text textoRankingAPI;
 
     private const string URL_API = "https://jsonplaceholder.typicode.com/users";
     private bool estaVisible = false;
@@ -58,7 +58,7 @@ public class GestorScoreboard : MonoBehaviourPunCallbacks
         }
     }
 
-    // --- 1. TUS BAJAS (Llamar a esto al matar un zombi) ---
+    // --- 1. TUS BAJAS ---
     public void RegistrarBaja()
     {
         int valorReal = zombisMuertosCifrado ^ claveSecreta;
@@ -72,6 +72,14 @@ public class GestorScoreboard : MonoBehaviourPunCallbacks
 
         ActualizarMiMarcador();
         if (estaVisible) ActualizarRankingReal();
+    }
+
+    public override void OnPlayerPropertiesUpdate(Player targetPlayer, Hashtable changedProps)
+    {
+        if (changedProps.ContainsKey("MisKills") && estaVisible)
+        {
+            ActualizarRankingReal();
+        }
     }
 
     private void ActualizarMiMarcador()
@@ -92,7 +100,6 @@ public class GestorScoreboard : MonoBehaviourPunCallbacks
 
         string ranking = "\n[JUGADORES EN LA SALA]\n";
 
-        // PhotonNetwork.PlayerList nos da a todos los que están jugando AHORA
         var jugadores = PhotonNetwork.PlayerList.OrderByDescending(p =>
         {
             if (p.CustomProperties.ContainsKey("MisKills")) return (int)p.CustomProperties["MisKills"];
@@ -144,7 +151,6 @@ public class GestorScoreboard : MonoBehaviourPunCallbacks
         canvas.renderMode = RenderMode.ScreenSpaceOverlay;
         canvas.sortingOrder = 100;
 
-        // SOLUCIÓN AL CENTRADO: Forzamos la escala relativa a la pantalla
         CanvasScaler scaler = canvasObj.AddComponent<CanvasScaler>();
         scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
         scaler.referenceResolution = new Vector2(1920, 1080);
@@ -156,16 +162,13 @@ public class GestorScoreboard : MonoBehaviourPunCallbacks
         imagenFondo.color = new Color(0, 0, 0, 0.90f);
 
         RectTransform rtFondo = panelPrincipal.GetComponent<RectTransform>();
-        // Anclajes rígidos Arriba a la Derecha (1, 1)
         rtFondo.anchorMin = new Vector2(1f, 1f);
         rtFondo.anchorMax = new Vector2(1f, 1f);
         rtFondo.pivot = new Vector2(1f, 1f);
 
-        // Caja principal adaptativa
         rtFondo.sizeDelta = new Vector2(400, 350);
-        rtFondo.anchoredPosition = new Vector2(-20, -20); // 20 píxeles de margen
+        rtFondo.anchoredPosition = new Vector2(-20, -20);
 
-        // Usamos un Layout Group para que el texto nunca se superponga
         VerticalLayoutGroup layout = panelPrincipal.AddComponent<VerticalLayoutGroup>();
         layout.childForceExpandHeight = false;
         layout.childForceExpandWidth = true;
@@ -175,7 +178,6 @@ public class GestorScoreboard : MonoBehaviourPunCallbacks
 
         Font fuenteDefecto = Resources.GetBuiltinResource<Font>("Arial.ttf");
 
-        // Creamos los tres bloques de texto apilados
         textoMisBajas = CrearTextoLayout("TextoMisBajas", panelPrincipal.transform, fuenteDefecto, Color.yellow, 22);
         textoRankingPhoton = CrearTextoLayout("TextoRankingPhoton", panelPrincipal.transform, fuenteDefecto, Color.green, 20);
         textoRankingAPI = CrearTextoLayout("TextoRankingAPI", panelPrincipal.transform, fuenteDefecto, Color.white, 18);
@@ -191,7 +193,6 @@ public class GestorScoreboard : MonoBehaviourPunCallbacks
         t.fontSize = tamaño;
         t.alignment = TextAnchor.UpperLeft;
 
-        // Para que se estire según lo que ocupe
         ContentSizeFitter fitter = obj.AddComponent<ContentSizeFitter>();
         fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
 

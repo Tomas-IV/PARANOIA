@@ -8,8 +8,8 @@ public class SeguirJugador : MonoBehaviourPun
     [SerializeField] private float distanciaDeteccion = 30f;
 
     [Header("Configuración de Combate")]
-    [SerializeField] private int danioPorGolpe = 10; // Cuánta vida le saca al jugador
-    [SerializeField] private float tiempoEntreAtaques = 1.5f; // Segundos de espera para volver a pegar
+    [SerializeField] private int danioPorGolpe = 10;
+    [SerializeField] private float tiempoEntreAtaques = 1.5f;
     private float proximoAtaqueTime;
 
     [Header("Configuración de Vida")]
@@ -64,24 +64,18 @@ public class SeguirJugador : MonoBehaviourPun
         }
     }
 
-    //  NUEVO: Detección física cuando el zombi toca al Player
     private void OnCollisionStay2D(Collision2D collision)
     {
-        // Solo el Master Client gestiona el daño de las IAs en red
         if (!PhotonNetwork.IsMasterClient) return;
         if (estaMuerto) return;
 
-        // Comprobamos si el objeto tocado es un Jugador
         if (collision.gameObject.CompareTag("Player"))
         {
             if (collision.gameObject.TryGetComponent(out PlayerManager playerHealth))
             {
-                // Controlamos el temporizador para que no pegue en cada frame
                 if (Time.time >= proximoAtaqueTime)
                 {
                     proximoAtaqueTime = Time.time + tiempoEntreAtaques;
-
-                    // Le infligimos daño usando el método nativo que me pasaste
                     playerHealth.TakeDamage(danioPorGolpe);
                     Debug.Log($"El zombi atacó a {collision.gameObject.name}. Daño: {danioPorGolpe}");
                 }
@@ -91,6 +85,7 @@ public class SeguirJugador : MonoBehaviourPun
 
     public void RecibirDanio(int cantidadDanio)
     {
+        // OJO ACÁ: Si solo el MasterClient puede procesar daño, las kills se le van a sumar solo a él.
         if (!PhotonNetwork.IsMasterClient) return;
         if (estaMuerto) return;
 
@@ -108,6 +103,18 @@ public class SeguirJugador : MonoBehaviourPun
         estaMuerto = true;
         rb.velocity = Vector2.zero;
         Debug.Log("Zombi muerto. Desactivando y mandando al pool...");
+
+        // --- CONEXIÓN CON EL SCOREBOARD ---
+        if (GestorScoreboard.Instancia != null)
+        {
+            GestorScoreboard.Instancia.RegistrarBaja();
+        }
+        else
+        {
+            Debug.LogError("No se encontró el GestorScoreboard en la escena.");
+        }
+        // ----------------------------------
+
         PhotonNetwork.Destroy(gameObject);
     }
 
@@ -127,7 +134,6 @@ public class SeguirJugador : MonoBehaviourPun
 
         foreach (GameObject jugador in jugadoresEnEscena)
         {
-            // Solo perseguir si el jugador está vivo (tu enum PlayerLifeState)
             if (jugador.TryGetComponent(out PlayerManager manager) && manager.IsDowned())
                 continue;
 
