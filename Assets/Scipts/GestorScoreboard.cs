@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.Networking;
@@ -15,6 +16,8 @@ public class GestorScoreboard : MonoBehaviourPunCallbacks
     // --- ENCRIPTACIÓN XOR ANTI-CHEAT ---
     private int claveSecreta = 8352;
     private int zombisMuertosCifrado;
+
+    private List<DatosSegurosAPI> rankingGlobalSeguro = new List<DatosSegurosAPI>();
 
     // --- INTERFAZ ---
     private GameObject panelPrincipal;
@@ -56,7 +59,7 @@ public class GestorScoreboard : MonoBehaviourPunCallbacks
         }
     }
 
-    // --- 1. TUS BAJAS ---
+    // --- 1. LÓGICA DE BAJAS SEGURA (XOR LOCAL Y EN RED) ---
     public void RegistrarBaja()
     {
         int valorReal = zombisMuertosCifrado ^ claveSecreta;
@@ -64,7 +67,7 @@ public class GestorScoreboard : MonoBehaviourPunCallbacks
         zombisMuertosCifrado = valorReal ^ claveSecreta;
 
         Hashtable hash = new Hashtable();
-        hash.Add("MisKills", valorReal);
+        hash.Add("MisKills", zombisMuertosCifrado);
         PhotonNetwork.LocalPlayer.SetCustomProperties(hash);
 
         ActualizarMiMarcador();
@@ -90,7 +93,7 @@ public class GestorScoreboard : MonoBehaviourPunCallbacks
         textoMisBajas.text = $"[TU PUNTAJE]\n{miNombre}: {misBajasReales} bajas";
     }
 
-    // --- 2. EL RANKING REAL (LOS NICKNAMES DE LA SALA) ---
+    // --- 2. RANKING REAL (DESENCRIPTANDO DATOS DE LA RED) ---
     private void ActualizarRankingReal()
     {
         if (textoRankingPhoton == null) return;
@@ -99,24 +102,35 @@ public class GestorScoreboard : MonoBehaviourPunCallbacks
 
         var jugadores = PhotonNetwork.PlayerList.OrderByDescending(p =>
         {
-            if (p.CustomProperties.ContainsKey("MisKills")) return (int)p.CustomProperties["MisKills"];
+            if (p.CustomProperties.ContainsKey("MisKills"))
+            {
+                int valorEncriptadoEnRed = (int)p.CustomProperties["MisKills"];
+                return valorEncriptadoEnRed ^ claveSecreta;
+            }
             return 0;
         }).ToList();
 
         foreach (Player p in jugadores)
         {
-            int bajas = p.CustomProperties.ContainsKey("MisKills") ? (int)p.CustomProperties["MisKills"] : 0;
+            int bajasReales = 0;
+
+            if (p.CustomProperties.ContainsKey("MisKills"))
+            {
+                int valorEncriptadoEnRed = (int)p.CustomProperties["MisKills"];
+                bajasReales = valorEncriptadoEnRed ^ claveSecreta;
+            }
+
             string nombre = string.IsNullOrEmpty(p.NickName) ? "Invitado" : p.NickName;
-            ranking += $"- {nombre}: {bajas} bajas\n";
+            ranking += $"- {nombre}: {bajasReales} bajas\n";
         }
 
         textoRankingPhoton.text = ranking;
     }
 
-    // --- 3. LA API PARA EL TP ---
+    // --- 3. RANKING API PROTEGIDO ---
     private IEnumerator ObtenerHighScoresAPI()
     {
-        textoRankingAPI.text = "\n[RANKING GLOBAL HISTÓRICO - API]\nCargando servidor web...";
+        textoRankingAPI.text = "\n[RANKING GLOBAL - API]\nCargando y protegiendo datos...";
 
         using (UnityWebRequest req = UnityWebRequest.Get(URL_API))
         {
@@ -128,27 +142,28 @@ public class GestorScoreboard : MonoBehaviourPunCallbacks
                 yield break;
             }
 
-            string json = req.downloadHandler.text;
-
-            // Si te tira error de que falta ZombiePlayerData, asegurate de tener esa clase 
-            // al fondo de alguno de tus scripts (como estaba en el original).
-            ZombiePlayerData[] listaTopJugadores = JsonConvert.DeserializeObject<ZombiePlayerData[]>(json);
+            ApiZombiePlayerData[] listaTopJugadores = JsonConvert.DeserializeObject<ApiZombiePlayerData[]>(req.downloadHandler.text);
 
             if (listaTopJugadores != null && listaTopJugadores.Length > 0)
             {
-                string rankingTexto = "\n[RANKING GLOBAL HISTÓRICO - API]\n";
-
-                // Determinamos cuántos mostrar (queremos 4, pero si la API trae menos, nos adaptamos)
-                int cantidadAMostrar = Mathf.Min(listaTopJugadores.Length, 4);
-
-                // Multiplicadores falsos variados para simular distintos puntajes altos
+                rankingGlobalSeguro.Clear();
+                string rankingTexto = "\n[RANKING GLOBAL - API]\n";
+                int cantidad = Mathf.Min(listaTopJugadores.Length, 4);
                 int[] multiplicadores = { 143, 92, 78, 55 };
 
-                // Bucle para crear el top 4 automático
-                for (int i = 0; i < cantidadAMostrar; i++)
+                for (int i = 0; i < cantidad; i++)
                 {
-                    int bajasSimuladas = listaTopJugadores[i].id * multiplicadores[i];
-                    rankingTexto += $"{i + 1}. {listaTopJugadores[i].name} - {bajasSimuladas} bajas\n";
+                    int bajaReal = listaTopJugadores[i].id * multiplicadores[i];
+                    int bajaEncriptada = bajaReal ^ claveSecreta;
+
+                    rankingGlobalSeguro.Add(new DatosSegurosAPI
+                    {
+                        nombreJugador = listaTopJugadores[i].name,
+                        puntajeCifrado = bajaEncriptada
+                    });
+
+                    int bajaMostrada = bajaEncriptada ^ claveSecreta;
+                    rankingTexto += $"{i + 1}. {listaTopJugadores[i].name} - {bajaMostrada} bajas\n";
                 }
 
                 textoRankingAPI.text = rankingTexto;
@@ -156,7 +171,7 @@ public class GestorScoreboard : MonoBehaviourPunCallbacks
         }
     }
 
-    // --- CÓDIGO DE INTERFAZ ESTRICTA ARRIBA A LA DERECHA ---
+    // --- INTERFAZ ---
     private void CrearInterfazUnificadaTopRight()
     {
         GameObject canvasObj = new GameObject("ScoreCanvasUnificado");
@@ -211,4 +226,20 @@ public class GestorScoreboard : MonoBehaviourPunCallbacks
 
         return t;
     }
+}
+
+// --- CLASES AUXILIARES ---
+
+[System.Serializable]
+public class ApiZombiePlayerData
+{
+    public int id;        // Deben ser public y en minúscula para coincidir con la API y el código
+    public string name;   // Deben ser public y en minúscula para coincidir con la API y el código
+}
+
+[System.Serializable]
+public class DatosSegurosAPI
+{
+    public string nombreJugador;
+    public int puntajeCifrado;
 }
