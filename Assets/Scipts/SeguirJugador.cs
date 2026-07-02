@@ -8,7 +8,7 @@ public class SeguirJugador : MonoBehaviourPun
     [SerializeField] private float distanciaDeteccion = 30f;
 
     [Header("Configuración de Vida")]
-    [SerializeField] private int vidaMax = 105; // 105 hp hace que el Shooter (35 dmg) lo mate de 3 tiros y el Specialist (15 dmg) de 7
+    [SerializeField] private int vidaMax = 105;
     private int vidaActual;
     private bool estaMuerto = false;
 
@@ -18,7 +18,17 @@ public class SeguirJugador : MonoBehaviourPun
     private void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
+    }
+
+    // CLAVE PARA EL POOL: Cada vez que el objeto se activa, reiniciamos sus valores base
+    private void OnEnable()
+    {
         vidaActual = vidaMax;
+        estaMuerto = false;
+        if (rb != null)
+        {
+            rb.velocity = Vector2.zero;
+        }
     }
 
     private void FixedUpdate()
@@ -50,7 +60,6 @@ public class SeguirJugador : MonoBehaviourPun
         }
     }
 
-    // FUNCIÓN CLAVE: Recibe el daño exacto enviado desde el Raycast del arma
     public void RecibirDanio(int cantidadDanio)
     {
         if (!PhotonNetwork.IsMasterClient) return;
@@ -69,7 +78,9 @@ public class SeguirJugador : MonoBehaviourPun
     {
         estaMuerto = true;
         rb.velocity = Vector2.zero;
-        Debug.Log("Zombi muerto. Eliminando de la red...");
+        Debug.Log("Zombi muerto. Desactivando y mandando al pool...");
+
+        // Sigue llamando a PhotonNetwork.Destroy. Nuestro Pool se encargará de interceptarlo
         PhotonNetwork.Destroy(gameObject);
     }
 
@@ -92,7 +103,7 @@ public class SeguirJugador : MonoBehaviourPun
             float distancia = Vector3.Distance(jugador.transform.position, posicionActual);
             if (distancia < distanciaMinima)
             {
-                distanciaMinima = distancia; 
+                distanciaMinima = distancia;
                 masCercano = jugador;
             }
         }

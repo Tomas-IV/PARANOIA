@@ -20,7 +20,6 @@ public class PlayerWeapon : MonoBehaviourPun
     {
         weaponStats = GetComponent<WeaponStats>();
 
-        // Protección: Si nos olvidamos de poner WeaponStats en el Inspector, nos avisa sin romper todo
         if (weaponStats == null)
         {
             Debug.LogError($"¡Falta el componente WeaponStats en el objeto {gameObject.name}! Por favor asignáselo en el Inspector.");
@@ -32,7 +31,6 @@ public class PlayerWeapon : MonoBehaviourPun
         if (!photonView.IsMine)
             return;
 
-        // Si weaponStats no se encontró, salimos del Update para evitar el NullReferenceException
         if (weaponStats == null)
             return;
 
@@ -89,17 +87,39 @@ public class PlayerWeapon : MonoBehaviourPun
             hitPoint = origin + direction * weaponStats.Range;
         }
 
+        // Ejecución visual para el jugador que dispara
         SpawnBulletFX(origin, hitPoint);
+
+        // Sincronización visual para el resto de los clientes de Photon
         photonView.RPC(nameof(RPC_PlayBulletFX), RpcTarget.Others, origin, hitPoint);
     }
 
     private void SpawnBulletFX(Vector2 origin, Vector2 hitPoint)
     {
-        Debug.Log("Spawn Bullet");
-        GameObject bullet = Instantiate(bulletVFXPrefab, origin, Quaternion.identity);
+        if (bulletVFXPrefab == null)
+        {
+            Debug.LogError("¡No asignaste el bulletVFXPrefab en el script PlayerWeapon!");
+            return;
+        }
 
-        bullet.GetComponent<BulletVisual>().Init(hitPoint, bulletSpeed);
-        Debug.Log(bullet.name);
+        Debug.Log("Spawn Bullet Visual");
+        // Forzamos a que nazca apuntando en la dirección del disparo calculando la rotación
+        Vector2 direction = (hitPoint - origin).normalized;
+        float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
+
+        GameObject bullet = Instantiate(bulletVFXPrefab, origin, Quaternion.Euler(0, 0, angle));
+
+        //  CORRECCIÓN CRUCIAL: Nos aseguramos de que el clon visual esté activo (por si el prefab quedó desactivado)
+        bullet.SetActive(true);
+
+        if (bullet.TryGetComponent(out BulletVisual visual))
+        {
+            visual.Init(hitPoint, bulletSpeed);
+        }
+        else
+        {
+            Debug.LogError("El prefab de la bala no tiene el script 'BulletVisual' adjunto.");
+        }
     }
 
     [PunRPC]

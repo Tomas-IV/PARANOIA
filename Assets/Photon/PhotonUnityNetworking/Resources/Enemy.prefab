@@ -102,7 +102,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   velocidad: 5
-  distanciaDeteccion: 30
+  distanciaDeteccion: 900
   vidaMax: 105
 --- !u!50 &-8267415931280761752
 Rigidbody2D:
