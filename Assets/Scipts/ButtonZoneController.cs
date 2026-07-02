@@ -8,7 +8,12 @@ public class ButtonZoneController : MonoBehaviour
     public int idBoton;
     public float radioDeteccion = 0.6f;
 
-    private bool presionandoQ = false;
+    [Header("Configuración del Botón")]
+    [Tooltip("Cuánto tiempo se mantiene apretado el botón con un solo toque")]
+    public float tiempoActivo = 1.5f;
+
+    private bool estadoAnterior = false;
+    private float temporizador = 0f;
 
     private void Update()
     {
@@ -39,34 +44,32 @@ public class ButtonZoneController : MonoBehaviour
             }
         }
 
-        // --- DEBUGS NUEVOS ---
-        // Este if solo se ejecuta en el instante exacto en que apretás la Q
-        if (Input.GetKeyDown(KeyCode.Q))
+        // Cambio 1: Usamos GetKeyDown (se activa una sola vez al hundir la tecla)
+        if (hayJugadorMio && Input.GetKeyDown(KeyCode.Q))
         {
-            Debug.Log($"[Botón {idBoton}] ¡Apretaste la Q! ¿Detectó a tu jugador en el área?: {hayJugadorMio}");
-
-            if (!hayJugadorMio)
-            {
-                Debug.LogWarning($"[Botón {idBoton}] Apretaste Q pero no hay un jugador tuyo en el área. ¡Revisá el Radio Deteccion ({radioDeteccion}) en el Inspector!");
-            }
+            // Llenamos el temporizador con los segundos que elegimos
+            temporizador = tiempoActivo;
+            Debug.Log($"[Botón {idBoton}] ¡Q presionada! Esperando al compañero por {tiempoActivo} segundos...");
         }
 
-        bool estadoActual = hayJugadorMio && Input.GetKey(KeyCode.Q);
-
-        if (estadoActual != presionandoQ)
+        // Cambio 2: Si el temporizador tiene tiempo, lo vamos restando
+        if (temporizador > 0)
         {
-            presionandoQ = estadoActual;
+            temporizador -= Time.deltaTime;
+        }
 
-            // Este Debug te avisa cada vez que cambia el estado y envía el voto
-            Debug.Log($"[Botón {idBoton}] Cambió el estado a: {presionandoQ}. Enviando voto a la puerta...");
+        // Cambio 3: El botón está "presionado" (true) mientras el temporizador sea mayor a cero
+        bool estadoActual = temporizador > 0;
+
+        // Si el estado cambió (pasó de apagado a prendido, o se le acabó el tiempo y se apagó)
+        if (estadoActual != estadoAnterior)
+        {
+            estadoAnterior = estadoActual;
 
             if (puertaPrincipal != null)
             {
-                puertaPrincipal.EnviarVoto(idBoton, presionandoQ);
-            }
-            else
-            {
-                Debug.LogError($"[Botón {idBoton}] ¡No tiene la puerta asignada en el Inspector!");
+                puertaPrincipal.EnviarVoto(idBoton, estadoActual);
+                Debug.Log($"[Botón {idBoton}] Estado enviado a la puerta: {estadoActual}");
             }
         }
     }
