@@ -4,6 +4,10 @@ using Photon.Realtime;
 
 public class SeguirJugador : MonoBehaviourPun
 {
+    [Header("Configuración de Tipo")]
+    [Tooltip("Marcá esta casilla SOLO en el Prefab del Boss")]
+    [SerializeField] private bool esBoss = false;
+
     [Header("Configuración de Movimiento")]
     [SerializeField] private float velocidad = 2.5f;
     [SerializeField] private float distanciaDeteccion = 30f;
@@ -78,7 +82,7 @@ public class SeguirJugador : MonoBehaviourPun
                 {
                     proximoAtaqueTime = Time.time + tiempoEntreAtaques;
                     playerHealth.TakeDamage(danioPorGolpe);
-                    Debug.Log($"El zombi atacó a {collision.gameObject.name}. Daño: {danioPorGolpe}");
+                    Debug.Log($"El enemigo atacó a {collision.gameObject.name}. Daño: {danioPorGolpe}");
                 }
             }
         }
@@ -86,7 +90,6 @@ public class SeguirJugador : MonoBehaviourPun
 
     // --- SISTEMA DE DAÑO Y MUERTE EN RED ---
 
-    // IMPORTANTE: Ahora recibe la cantidad de daño y el ID de quién disparó
     [PunRPC]
     public void RecibirDanioRed(int cantidadDanio, int idAtacante)
     {
@@ -95,13 +98,21 @@ public class SeguirJugador : MonoBehaviourPun
         if (estaMuerto) return;
 
         vidaActual -= cantidadDanio;
-        Debug.Log($"Zombi dañado con {cantidadDanio}. Vida restante: {vidaActual}");
+        Debug.Log($"Enemigo dañado con {cantidadDanio}. Vida restante: {vidaActual}");
 
         if (vidaActual <= 0)
         {
             estaMuerto = true;
             rb.velocity = Vector2.zero;
-            Debug.Log($"Zombi muerto. Procesando kill para el jugador con ID: {idAtacante}");
+            Debug.Log($"Enemigo muerto. Procesando kill para el jugador con ID: {idAtacante}");
+
+            // ---------------------------------------------------------
+            // ACÁ ESTÁ LA CONEXIÓN CON EL GAMEMANAGER PARA LA VICTORIA
+            // ---------------------------------------------------------
+            if (esBoss && GameManager.Instance != null)
+            {
+                GameManager.Instance.BossDerrotado();
+            }
 
             // El Master Client busca al jugador que disparó usando su ID
             Player atacante = PhotonNetwork.CurrentRoom.GetPlayer(idAtacante);

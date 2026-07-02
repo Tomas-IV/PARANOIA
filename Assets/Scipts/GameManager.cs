@@ -29,7 +29,7 @@ public class GameManager : MonoBehaviourPunCallbacks
     public List<PlayerManager> Players { get; } = new();
 
     private bool gameStarted;
-    private int jugadoresMuertos = 0;
+    private int jugadoresMuertos = 0; // Contador de jugadores caídos
 
     private void Awake()
     {
@@ -64,16 +64,25 @@ public class GameManager : MonoBehaviourPunCallbacks
 
     public override void OnPlayerLeftRoom(Player otherPlayer)
     {
+        // Si alguien se va, podríamos chequear condiciones de victoria/derrota aquí en el futuro
     }
 
     private void TryStartMatch()
     {
-        if (!PhotonNetwork.IsMasterClient) return;
-        if (PhotonNetwork.CurrentRoom == null) return;
-        if (gameStarted) return;
-        if (PhotonNetwork.CurrentRoom.PlayerCount < minPlayers) return;
+        if (!PhotonNetwork.IsMasterClient)
+            return;
+
+        if (PhotonNetwork.CurrentRoom == null)
+            return;
+
+        if (gameStarted)
+            return;
+
+        if (PhotonNetwork.CurrentRoom.PlayerCount < minPlayers)
+            return;
 
         gameStarted = true;
+
         photonView.RPC(nameof(RPC_SetGameState), RpcTarget.AllBuffered, GameState.Playing);
 
         Debug.Log("[GameManager] Match Started");
@@ -86,8 +95,10 @@ public class GameManager : MonoBehaviourPunCallbacks
     }
 
     // --- LÓGICA DE VICTORIA ---
+    // Llamar a esta función desde el script del Boss cuando muere
     public void BossDerrotado()
     {
+        // Solo enviamos la victoria si estábamos jugando
         if (CurrentState == GameState.Playing)
         {
             photonView.RPC(nameof(RPC_Victory), RpcTarget.All);
@@ -100,12 +111,7 @@ public class GameManager : MonoBehaviourPunCallbacks
         CurrentState = GameState.Victory;
         Debug.Log("VICTORY");
 
-        // --- CONEXIÓN CON SAVEMANAGER: Guardamos la victoria automáticamente ---
-        if (SaveManager.Instancia != null)
-        {
-            SaveManager.Instancia.SumarVictoria();
-        }
-
+        // Encendemos el fondo de victoria
         if (fondoVictoria != null)
             fondoVictoria.SetActive(true);
 
@@ -113,6 +119,7 @@ public class GameManager : MonoBehaviourPunCallbacks
     }
 
     // --- LÓGICA DE DERROTA ---
+    // Llamar a esta función desde el script del jugador cuando muere
     public void JugadorMuerto()
     {
         if (CurrentState == GameState.Playing)
@@ -127,6 +134,7 @@ public class GameManager : MonoBehaviourPunCallbacks
         jugadoresMuertos++;
         Debug.Log($"Jugador muerto. Total de muertos: {jugadoresMuertos}");
 
+        // Si el MasterClient detecta que murieron todos los de la sala, manda la orden de derrota
         if (PhotonNetwork.IsMasterClient && jugadoresMuertos >= PhotonNetwork.CurrentRoom.PlayerCount)
         {
             Defeat();
@@ -135,7 +143,8 @@ public class GameManager : MonoBehaviourPunCallbacks
 
     public void Defeat()
     {
-        if (!PhotonNetwork.IsMasterClient) return;
+        if (!PhotonNetwork.IsMasterClient)
+            return;
 
         photonView.RPC(nameof(RPC_Defeat), RpcTarget.All);
     }
@@ -146,12 +155,7 @@ public class GameManager : MonoBehaviourPunCallbacks
         CurrentState = GameState.Defeat;
         Debug.Log("DEFEAT");
 
-        // --- CONEXIÓN CON SAVEMANAGER: Guardamos la derrota automáticamente ---
-        if (SaveManager.Instancia != null)
-        {
-            SaveManager.Instancia.SumarDerrota();
-        }
-
+        // Encendemos el fondo de derrota
         if (fondoDerrota != null)
             fondoDerrota.SetActive(true);
 
@@ -161,12 +165,15 @@ public class GameManager : MonoBehaviourPunCallbacks
     // --- MANEJO DE SALA ---
     private IEnumerator ReturnToLobby()
     {
+        // Espera 5 segundos mostrando la pantalla de victoria/derrota
         yield return new WaitForSeconds(5f);
 
         if (PhotonNetwork.InRoom)
         {
             PhotonNetwork.LeaveRoom();
-            while (PhotonNetwork.InRoom) yield return null;
+
+            while (PhotonNetwork.InRoom)
+                yield return null;
         }
 
         PhotonNetwork.LoadLevel(0);
@@ -186,7 +193,10 @@ public class GameManager : MonoBehaviourPunCallbacks
     private IEnumerator LeaveRoomRoutine()
     {
         PhotonNetwork.LeaveRoom();
-        while (PhotonNetwork.InRoom) yield return null;
+
+        while (PhotonNetwork.InRoom)
+            yield return null;
+
         PhotonNetwork.LoadLevel(0);
     }
 }

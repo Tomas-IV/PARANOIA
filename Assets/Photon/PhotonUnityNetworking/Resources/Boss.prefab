@@ -102,6 +102,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7871782790874f14cb0073d19ad9052c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  esBoss: 1
   velocidad: 4
   distanciaDeteccion: 900
   danioPorGolpe: 40
