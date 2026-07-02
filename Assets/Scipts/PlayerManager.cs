@@ -32,17 +32,24 @@ public class PlayerManager : MonoBehaviourPun
         colliders = GetComponents<Collider2D>();
 
         CurrentHealth = maxHealth;
-        playerUI.SetHealth(CurrentHealth, maxHealth);
-        playerUI.SetDowned(false);
+
+        if (playerUI != null)
+        {
+            playerUI.SetHealth(CurrentHealth, maxHealth);
+            playerUI.SetDowned(false);
+        }
+
         LifeState = PlayerLifeState.Alive;
 
-        GameManager.Instance.Players.Add(this);
-
+        if (GameManager.Instance != null && GameManager.Instance.Players != null)
+        {
+            GameManager.Instance.Players.Add(this);
+        }
     }
 
     private void OnDestroy()
     {
-        if (GameManager.Instance != null)
+        if (GameManager.Instance != null && GameManager.Instance.Players != null)
             GameManager.Instance.Players.Remove(this);
     }
 
@@ -56,8 +63,7 @@ public class PlayerManager : MonoBehaviourPun
 
         ApplyDamage(damage);
 
-        Debug.Log($"[DAMAGE] {photonView.Owner.NickName} took {damage}");
-
+        Debug.Log("[DAMAGE] " + photonView.Owner.NickName + " took " + damage);
     }
 
     private void ApplyDamage(int damage)
@@ -65,8 +71,8 @@ public class PlayerManager : MonoBehaviourPun
         CurrentHealth -= damage;
 
         photonView.RPC(nameof(RPC_UpdateHealth), RpcTarget.All, CurrentHealth);
-        
-        Debug.Log($"[DAMAGE] HP after: {CurrentHealth}");
+
+        Debug.Log("[DAMAGE] HP after: " + CurrentHealth);
 
         if (CurrentHealth <= 0)
             EnterDownedState();
@@ -81,7 +87,12 @@ public class PlayerManager : MonoBehaviourPun
     private void RPC_UpdateHealth(int health)
     {
         CurrentHealth = health;
-        playerUI.SetHealth(CurrentHealth, maxHealth);
+
+        // CORRECCION: Validacion para que no tire NullReference en clientes remotos
+        if (playerUI != null)
+        {
+            playerUI.SetHealth(CurrentHealth, maxHealth);
+        }
     }
 
     [PunRPC]
@@ -90,13 +101,19 @@ public class PlayerManager : MonoBehaviourPun
         CurrentHealth = 0;
         LifeState = PlayerLifeState.Downed;
 
-        movement.SetCanMove(false);
+        if (movement != null)
+        {
+            movement.SetCanMove(false);
+        }
 
         SetHitboxActive(false);
 
-        playerUI.SetDowned(true);
+        if (playerUI != null)
+        {
+            playerUI.SetDowned(true);
+        }
 
-        Debug.Log($"{photonView.Owner.NickName} DOWNED");
+        Debug.Log(photonView.Owner.NickName + " DOWNED");
     }
 
     public void Revive()
@@ -113,20 +130,33 @@ public class PlayerManager : MonoBehaviourPun
         CurrentHealth = maxHealth / 2;
         LifeState = PlayerLifeState.Alive;
 
-        movement.SetCanMove(true);
+        if (movement != null)
+        {
+            movement.SetCanMove(true);
+        }
 
         SetHitboxActive(true);
 
-        playerUI.SetDowned(false);
-        playerUI.SetHealth(CurrentHealth, maxHealth);
+        if (playerUI != null)
+        {
+            playerUI.SetDowned(false);
+            playerUI.SetHealth(CurrentHealth, maxHealth);
+        }
 
-        Debug.Log($"{photonView.Owner.NickName} REVIVED");
+        Debug.Log(photonView.Owner.NickName + " REVIVED");
     }
 
     private void SetHitboxActive(bool active)
     {
+        if (colliders == null) return;
+
         foreach (var col in colliders)
-            col.enabled = active;
+        {
+            if (col != null)
+            {
+                col.enabled = active;
+            }
+        }
     }
 
     public void Heal(int amount)
