@@ -101,6 +101,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   speed: 8
   explodeDelay: 2
+  explosionRadius: 2
+  damage: 50
 --- !u!114 &604123653934138293
 MonoBehaviour:
   m_ObjectHideFlags: 0
