@@ -5,19 +5,30 @@ using Photon.Pun;
 public class EnemyPoolManager : MonoBehaviour, IPunPrefabPool
 {
     [Header("Pool Settings")]
-    [SerializeField] private GameObject enemyPrefab; // Arrastrá el prefab del zombi acá
-    [SerializeField] private int poolInitialSize = 10; // Cantidad de zombis precargados ocultos
+    [SerializeField] private GameObject enemyPrefab; // El prefab de tu zombi
+    [SerializeField] private int poolInitialSize = 10;
 
     private Queue<GameObject> pooledObjects = new Queue<GameObject>();
 
+    // Guardamos una referencia al pool por defecto de Photon para no romper los otros objetos
+    private IPunPrefabPool defaultPhotonPool;
+
+    private void Awake()
+    {
+        //  Guardamos el comportamiento original de Photon ANTES de sobreescribirlo
+        defaultPhotonPool = PhotonNetwork.PrefabPool;
+        PhotonNetwork.PrefabPool = this;
+    }
+
     private void Start()
     {
-        // Registramos este script en Photon como el gestor oficial de instanciación
-        PhotonNetwork.PrefabPool = this;
-
         if (enemyPrefab != null)
         {
-            PrewarmPool();
+            //  REGLA CRUCIAL: El prewarm SOLO lo hace el MasterClient o rompe la red de los clientes
+            if (PhotonNetwork.IsMasterClient || !PhotonNetwork.IsConnected)
+            {
+                PrewarmPool();
+            }
         }
         else
         {
@@ -25,13 +36,12 @@ public class EnemyPoolManager : MonoBehaviour, IPunPrefabPool
         }
     }
 
-    // Instancia los enemigos iniciales apagados para ganar rendimiento
     private void PrewarmPool()
     {
         for (int i = 0; i < poolInitialSize; i++)
         {
             GameObject obj = Instantiate(enemyPrefab);
-            obj.name = enemyPrefab.name; // Photon necesita que el nombre coincida exacto
+            obj.name = enemyPrefab.name;
             obj.SetActive(false);
             pooledObjects.Enqueue(obj);
         }
@@ -40,14 +50,13 @@ public class EnemyPoolManager : MonoBehaviour, IPunPrefabPool
     // INTERCEPCIÓN DE PHOTON NETWORK INSTANTIATE
     public GameObject Instantiate(string prefabId, Vector3 position, Quaternion rotation)
     {
-        // Si el prefab solicitado coincide con nuestro enemigo controlado por el pool
-        if (prefabId == enemyPrefab.name)
+        // Si lo que se va a instanciar es nuestro Zombi, usamos nuestro reciclaje
+        if (enemyPrefab != null && prefabId == enemyPrefab.name)
         {
             GameObject obj;
 
             if (pooledObjects.Count > 0)
             {
-                // Sacamos uno existente del pool
                 obj = pooledObjects.Dequeue();
                 obj.transform.position = position;
                 obj.transform.rotation = rotation;
@@ -55,7 +64,6 @@ public class EnemyPoolManager : MonoBehaviour, IPunPrefabPool
             }
             else
             {
-                // Si la horda supera el tamaño inicial, creamos uno nuevo dinámicamente
                 obj = Instantiate(enemyPrefab, position, rotation);
                 obj.name = enemyPrefab.name;
             }
@@ -63,23 +71,24 @@ public class EnemyPoolManager : MonoBehaviour, IPunPrefabPool
             return obj;
         }
 
-        // Si Photon pide spawnear otra cosa (ej: las balas o jugadores), lo maneja por defecto
-        return Instantiate(Resources.Load<GameObject>(prefabId), position, rotation);
+        //  CORRECCIÓN HISTÓRICA: Si Photon pide spawnear balas, efectos o jugadores, 
+        // se lo devolvemos a Photon para que lo maneje de forma nativa sin romper nada.
+        return defaultPhotonPool.Instantiate(prefabId, position, rotation);
     }
 
     // INTERCEPCIÓN DE PHOTON NETWORK DESTROY
     public void Destroy(GameObject gameObject)
     {
-        // Si es uno de nuestros zombis, lo apagamos y lo devolvemos a la fila del pool
-        if (gameObject.name == enemyPrefab.name)
+        // Si el objeto que se muere es nuestro zombi, lo guardamos apagado
+        if (enemyPrefab != null && gameObject.name == enemyPrefab.name)
         {
             gameObject.SetActive(false);
             pooledObjects.Enqueue(gameObject);
         }
         else
         {
-            // Si es otro objeto ajeno al pool, lo destruye de verdad
-            Destroy(gameObject);
+            //  Si es una bala, jugador o VFX, dejamos que Photon lo destruya en red normalmente
+            defaultPhotonPool.Destroy(gameObject);
         }
     }
 }
