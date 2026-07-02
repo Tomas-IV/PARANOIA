@@ -5,14 +5,15 @@ using Photon.Pun;
 public class DoorController : MonoBehaviourPun
 {
     [Header("Segunda Puerta Opcional")]
-    [SerializeField] private GameObject otraPuerta; // Aca vas a arrastrar a Door (1)
+    [SerializeField] private GameObject otraPuerta;
 
     private HashSet<int> botonesActivados = new HashSet<int>();
     private bool yaSeDesvanecio = false;
 
     public void EnviarConfirmacionInput(int idBoton)
     {
-        photonView.RPC(nameof(RPC_RegistrarQBoton), RpcTarget.All, idBoton);
+        // Usamos AllBuffered para asegurar la sincronizacion total e inmediata
+        photonView.RPC(nameof(RPC_RegistrarQBoton), RpcTarget.AllBuffered, idBoton);
     }
 
     [PunRPC]
@@ -23,21 +24,19 @@ public class DoorController : MonoBehaviourPun
         if (!botonesActivados.Contains(idBoton))
         {
             botonesActivados.Add(idBoton);
-            Debug.Log("PUERTA CENTRAL: Registrado Boton " + idBoton + ". Total activos: " + botonesActivados.Count + "/2");
+            Debug.Log($"[PUERTA] Boton {idBoton} registrado. Total activos: {botonesActivados.Count}/2");
         }
 
         if (botonesActivados.Count >= 2)
         {
             yaSeDesvanecio = true;
-            Debug.Log("PUERTA CENTRAL: ¡Ambos botones presionados! Desvaneciendo ambas puertas.");
+            Debug.Log("[PUERTA] Sincronización exitosa. Desvaneciendo estructuras.");
 
-            // Apagamos la otra puerta si fue asignada
             if (otraPuerta != null)
             {
                 otraPuerta.SetActive(false);
             }
 
-            // Apagamos esta misma puerta
             gameObject.SetActive(false);
         }
     }

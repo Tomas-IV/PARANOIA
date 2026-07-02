@@ -8,44 +8,29 @@ public class ButtonZoneController : MonoBehaviour
     [Header("Configuracion de Equipo")]
     [SerializeField] private int idBotonUnico;
 
-    [Header("Configuracion del Sensor (Reemplaza al Trigger)")]
-    [SerializeField] private Vector2 tamanoSensor = new Vector2(0.39f, 0.30f); // El tamaño que tenias en tu Trigger
-    [SerializeField] private LayerMask capasJugador; // Configura esto en 'Default' o la capa de tus Players
+    [Header("Configuracion del Sensor")]
+    [SerializeField] private Vector2 tamanoSensor = new Vector2(0.39f, 0.30f);
+    [SerializeField] private LayerMask capasJugador;
 
     private bool jugadorEnZona = false;
 
     private void Update()
     {
-        // Escaneamos activamente el area del boton cada frame
-        // Esto evita que la fisica se duerma si el jugador se queda quieto
-        Collider2D[] colisiones = Physics2D.OverlapBoxAll(transform.position, tamanoSensor, 0f);
+        Collider2D[] colisiones = Physics2D.OverlapBoxAll(transform.position, tamanoSensor, 0f, capasJugador);
 
-        jugadorEnZona = false;
+        jugadorEnZona = colisiones.Length > 0;
 
-        foreach (var col in colisiones)
-        {
-            if (col.CompareTag("Player") ||
-                col.gameObject.name.Contains("PlayerSho") ||
-                col.gameObject.name.Contains("PlayerSpe"))
-            {
-                jugadorEnZona = true;
-                break; // Si encontramos al menos uno, habilitamos la Q y cortamos el bucle
-            }
-        }
-
-        // Si el escáner detectó un jugador y este presiona la Q, mandamos la señal
         if (jugadorEnZona && Input.GetKeyDown(KeyCode.Q))
         {
-            Debug.Log("Boton " + idBotonUnico + " detecto la Q correctamente.");
             if (puertaObjetivo != null)
             {
+                Debug.Log($"[BOTON] Enviando señal de boton {idBotonUnico}");
                 puertaObjetivo.EnviarConfirmacionInput(idBotonUnico);
             }
         }
     }
 
-    // Dibujamos el sensor en el editor de Unity para que puedas ver el area exacta que editas
-    private void OnDrawGizmosDefault()
+    private void OnDrawGizmos()
     {
         Gizmos.color = Color.green;
         Gizmos.DrawWireCube(transform.position, tamanoSensor);
