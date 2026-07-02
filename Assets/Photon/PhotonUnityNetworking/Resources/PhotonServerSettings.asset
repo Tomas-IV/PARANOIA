@@ -65,6 +65,12 @@ MonoBehaviour:
   - RPC_SincronizarBoton
   - RPC_SincronizarEntradaBoton
   - RPC_RecibirVoto
+  - RPC_CancelBeingRevived
+  - RPC_RequestCancelRevive
+  - RPC_RequestFinishRevive
+  - RPC_RequestStartRevive
+  - RPC_StartBeingRevived
+  - RPC_StartReviveResult
   DisableAutoOpenWizard: 1
   ShowSettings: 0
   DevRegionSetOnce: 1

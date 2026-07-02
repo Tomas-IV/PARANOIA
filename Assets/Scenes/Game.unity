@@ -1215,9 +1215,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 72463faac5f2f9644ac19a97fe0960ce, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  puertaPrincipal: {fileID: 1877974969}
   idBoton: 1
-  radioDeteccion: 0.5
+  radioDeteccion: 0.6
 --- !u!61 &739442457
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -1932,9 +1931,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 72463faac5f2f9644ac19a97fe0960ce, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  puertaPrincipal: {fileID: 1877974969}
   idBoton: 2
-  radioDeteccion: 0.5
+  radioDeteccion: 0.6
 --- !u!61 &1081796995
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -2774,6 +2772,8 @@ GameObject:
   - component: {fileID: 1487620608}
   - component: {fileID: 1487620607}
   - component: {fileID: 1487620611}
+  - component: {fileID: 1487620613}
+  - component: {fileID: 1487620612}
   m_Layer: 0
   m_Name: Door (1)
   m_TagString: Untagged
@@ -2874,6 +2874,43 @@ BoxCollider2D:
   serializedVersion: 2
   m_Size: {x: 2.63, y: 0.46}
   m_EdgeRadius: 0
+--- !u!114 &1487620612
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1487620606}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aa584fbee541324448dd18d8409c7a41, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ObservedComponentsFoldoutOpen: 1
+  Group: 0
+  prefixField: -1
+  Synchronization: 3
+  OwnershipTransfer: 0
+  observableSearch: 2
+  ObservedComponents: []
+  sceneViewId: 3
+  InstantiationId: 0
+  isRuntimeInstantiated: 0
+--- !u!114 &1487620613
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1487620606}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7af40bf4bbb4e3e41b72f18d36822cc7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  casillasAMover: 3
+  velocidadMovimiento: 2
+  direccionY: 1
 --- !u!1 &1556189588
 GameObject:
   m_ObjectHideFlags: 0
@@ -3354,9 +3391,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7af40bf4bbb4e3e41b72f18d36822cc7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  puertaAbajo: {fileID: 1487620606}
   casillasAMover: 3
   velocidadMovimiento: 2
+  direccionY: 1
 --- !u!114 &1877974970
 MonoBehaviour:
   m_ObjectHideFlags: 0

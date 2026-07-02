@@ -3,72 +3,55 @@ using Photon.Pun;
 
 public class DoorController : MonoBehaviourPun
 {
-    [Header("Puerta Abajo")]
-    public GameObject puertaAbajo; // Aca va Door (1)
+    [Header("Configuración de Movimiento")]
+    public float casillasAMover = 3f;
+    public float velocidadMovimiento = 2f;
 
-    [Header("Ajustes de Movimiento")]
-    public float casillasAMover = 3f; // Cuánto se van a mover
-    public float velocidadMovimiento = 2f; // Qué tan rápido se deslizan
+    [Tooltip("Escribí 1 para que suba, o -1 para que baje")]
+    public float direccionY = 1f;
 
     private bool boton1Activo = false;
     private bool boton2Activo = false;
     private bool abrirPuertas = false;
 
-    // Guardamos las coordenadas matemáticas
-    private Vector3 posInicialPrincipal;
-    private Vector3 posDestinoPrincipal;
-
-    private Vector3 posInicialAbajo;
-    private Vector3 posDestinoAbajo;
+    private Vector3 posInicial;
+    private Vector3 posDestino;
 
     void Start()
     {
-        // Al arrancar, memorizamos dónde están y calculamos a dónde tienen que ir
-        posInicialPrincipal = transform.position;
-        // La puerta principal (arriba) se mueve hacia ARRIBA en el eje Y
-        posDestinoPrincipal = posInicialPrincipal + new Vector3(0, casillasAMover, 0);
-
-        if (puertaAbajo != null)
-        {
-            posInicialAbajo = puertaAbajo.transform.position;
-            // La puerta secundaria (abajo) se mueve hacia ABAJO en el eje Y
-            posDestinoAbajo = posInicialAbajo + new Vector3(0, -casillasAMover, 0);
-        }
+        posInicial = transform.position;
+        // Cada puerta calcula su propio destino de forma independiente usando su direcciónY
+        posDestino = posInicial + new Vector3(0, casillasAMover * direccionY, 0);
     }
 
     public void EnviarVoto(int id, bool estado)
     {
+        // Cada puerta corre su propio RPC en red de forma independiente
         photonView.RPC(nameof(RPC_RecibirVoto), RpcTarget.AllBuffered, id, estado);
     }
 
     [PunRPC]
     void RPC_RecibirVoto(int id, bool estado)
     {
-        if (abrirPuertas) return; // Si ya se están abriendo, bloqueamos los botones
+        if (abrirPuertas) return;
 
         if (id == 1) boton1Activo = estado;
         if (id == 2) boton2Activo = estado;
 
-        // Si VOS y TU COMPAÑERO mantienen Q...
+        // Si ambos personajes mantienen la Q al mismo tiempo
         if (boton1Activo && boton2Activo)
         {
             abrirPuertas = true;
+            Debug.Log($"[PUERTA] {gameObject.name} activada. Iniciando movimiento.");
         }
     }
 
     void Update()
     {
-        // Si el candado se abrió, movemos las puertas físicamente en cada frame
         if (abrirPuertas)
         {
-            // Desliza esta puerta hacia arriba
-            transform.position = Vector3.MoveTowards(transform.position, posDestinoPrincipal, velocidadMovimiento * Time.deltaTime);
-
-            // Desliza la otra puerta hacia abajo
-            if (puertaAbajo != null)
-            {
-                puertaAbajo.transform.position = Vector3.MoveTowards(puertaAbajo.transform.position, posDestinoAbajo, velocidadMovimiento * Time.deltaTime);
-            }
+            // Cada estructura se desplaza suavemente hacia su propia meta calculada
+            transform.position = Vector3.MoveTowards(transform.position, posDestino, velocidadMovimiento * Time.deltaTime);
         }
     }
 }
