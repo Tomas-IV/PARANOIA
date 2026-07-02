@@ -16,19 +16,21 @@ public class ButtonZoneController : MonoBehaviourPun
 
     private void Update()
     {
-        // Escaneamos el área verde
         Collider2D[] colisiones = Physics2D.OverlapBoxAll(transform.position, tamanoSensor, 0f);
-
         bool miJugadorEstaAca = false;
 
-        // Revisamos cada cosa que toca el botón
         foreach (Collider2D col in colisiones)
         {
             if (col.CompareTag("Player") || col.gameObject.name.Contains("PlayerSho") || col.gameObject.name.Contains("PlayerSpe"))
             {
+                // Buscamos el PhotonView en el objeto, y si está en un hijo, lo buscamos en el padre
                 PhotonView pv = col.GetComponent<PhotonView>();
+                if (pv == null)
+                {
+                    pv = col.GetComponentInParent<PhotonView>();
+                }
 
-                // CRUCIAL: Solo habilitamos el botón si el personaje que lo pisa es el TUYO (el local)
+                // Si encontramos tu conexión, te damos permiso
                 if (pv != null && pv.IsMine)
                 {
                     miJugadorEstaAca = true;
@@ -37,28 +39,22 @@ public class ButtonZoneController : MonoBehaviourPun
             }
         }
 
-        // Si TU personaje está parado encima y MANTENÉS apretada la Q
+        // Si VOS estas parado encima y MANTENÉS apretada la Q
         if (miJugadorEstaAca && Input.GetKey(KeyCode.Q))
         {
             if (!qEstaPresionada)
             {
                 qEstaPresionada = true;
-                if (puertaObjetivo != null)
-                {
-                    puertaObjetivo.ActualizarEstadoBoton(idBotonUnico, true);
-                }
+                if (puertaObjetivo != null) puertaObjetivo.ActualizarEstadoBoton(idBotonUnico, true);
             }
         }
-        // Si soltás la Q o te salís del botón, se cancela tu voto
+        // Si soltás la tecla, o si te movés fuera del botón
         else
         {
             if (qEstaPresionada)
             {
                 qEstaPresionada = false;
-                if (puertaObjetivo != null)
-                {
-                    puertaObjetivo.ActualizarEstadoBoton(idBotonUnico, false);
-                }
+                if (puertaObjetivo != null) puertaObjetivo.ActualizarEstadoBoton(idBotonUnico, false);
             }
         }
     }
