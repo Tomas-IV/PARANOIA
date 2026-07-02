@@ -58,6 +58,8 @@ MonoBehaviour:
   - RPC_Defeat
   - RPC_Victory
   - RPC_RequestEnemyDamage
+  - RPC_AbrirPuertaGlobal
+  - RPC_RegistrarEnterJugador
   DisableAutoOpenWizard: 1
   ShowSettings: 0
   DevRegionSetOnce: 1
