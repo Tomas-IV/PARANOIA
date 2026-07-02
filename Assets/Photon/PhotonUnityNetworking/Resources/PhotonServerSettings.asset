@@ -71,6 +71,7 @@ MonoBehaviour:
   - RPC_RequestStartRevive
   - RPC_StartBeingRevived
   - RPC_StartReviveResult
+  - RPC_AbrirPuertas
   DisableAutoOpenWizard: 1
   ShowSettings: 0
   DevRegionSetOnce: 1
