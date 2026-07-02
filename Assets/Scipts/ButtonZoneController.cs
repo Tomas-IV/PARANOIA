@@ -3,58 +3,62 @@ using Photon.Pun;
 
 public class ButtonZoneController : MonoBehaviour
 {
-    [Header("Conexión")]
-    public DoorController puertaPrincipal;
-    public int idBoton;
-    public float radioDeteccion = 0.6f;
+    [Header("Conexión con la Puerta")]
+    public DoorController puertaObjetivo;
+    public int idBoton; // Poné 1 en el primer botón, y 2 en el segundo
 
-    private bool presionandoQ = false;
+    private bool estoyAdentro = false;
+    private bool estadoEnviado = false;
 
-    private void Update()
+    // Cuando cualquier objeto entra físicamente en el trigger del botón
+    private void OnTriggerStay2D(Collider2D otro)
     {
-        bool hayJugadorMio = false;
-
-        Collider2D[] colisiones = Physics2D.OverlapCircleAll(
-            transform.position,
-            radioDeteccion);
-
-        foreach (Collider2D col in colisiones)
+        // Buscamos si el objeto que pisó el botón es un jugador
+        if (otro.CompareTag("Player") || otro.gameObject.name.Contains("Player"))
         {
-            if (!col.CompareTag("Player"))
-            {
-                continue;
-            }
+            // Buscamos el PhotonView en el objeto, en su padre o en sus hijos (cubre cualquier jerarquía)
+            PhotonView pv = otro.GetComponentInParent<PhotonView>();
+            if (pv == null) pv = otro.GetComponentInChildren<PhotonView>();
 
-            PhotonView pv = col.GetComponent<PhotonView>();
-
-            if (pv == null)
-            {
-                pv = col.GetComponentInParent<PhotonView>();
-            }
-
+            // Si el personaje que está pisando es EL TUYO (de tu PC local)
             if (pv != null && pv.IsMine)
             {
-                hayJugadorMio = true;
-                break;
-            }
-        }
-
-        bool estadoActual = hayJugadorMio && Input.GetKey(KeyCode.Q);
-
-        if (estadoActual != presionandoQ)
-        {
-            presionandoQ = estadoActual;
-
-            if (puertaPrincipal != null)
-            {
-                puertaPrincipal.EnviarVoto(idBoton, presionandoQ);
+                estoyAdentro = true;
             }
         }
     }
 
-    private void OnDrawGizmos()
+    // Cuando salís caminando del botón
+    private void OnTriggerExit2D(Collider2D otro)
     {
-        Gizmos.color = Color.cyan;
-        Gizmos.DrawWireSphere(transform.position, radioDeteccion);
+        PhotonView pv = otro.GetComponentInParent<PhotonView>();
+        if (pv == null) pv = otro.GetComponentInChildren<PhotonView>();
+
+        if (pv != null && pv.IsMine)
+        {
+            estoyAdentro = false;
+        }
+    }
+
+    private void Update()
+    {
+        // ¿Estás parado adentro del trigger Y manteniendo apretada la Q?
+        bool presionandoAhora = (estoyAdentro && Input.GetKey(KeyCode.Q));
+
+        // Solo enviamos señal por red si cambiaste de estado (para no saturar el servidor)
+        if (presionandoAhora != estadoEnviado)
+        {
+            estadoEnviado = presionandoAhora;
+
+            if (puertaObjetivo != null)
+            {
+                Debug.Log($"[BOTÓN {idBoton}] Enviando estado: {estadoEnviado}");
+                puertaObjetivo.EnviarSeñal(idBoton, estadoEnviado);
+            }
+            else
+            {
+                Debug.LogError($"[ERROR] Al Botón {idBoton} le falta arrastrar la Puerta Objetivo en el Inspector!");
+            }
+        }
     }
 }

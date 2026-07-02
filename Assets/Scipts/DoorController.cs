@@ -1,96 +1,56 @@
-using System.Collections.Generic;
 using UnityEngine;
 using Photon.Pun;
 
 public class DoorController : MonoBehaviourPun
 {
-    [Header("Puerta Abajo")]
-    [SerializeField] private GameObject puertaAbajo;
+    [Header("Ajustes de Apertura")]
+    public float distanciaApertura = 3f; // Cuántas casillas se mueve hacia arriba
+    public float velocidad = 2.5f;
 
-    [Header("Botones")]
-    [SerializeField] private int cantidadBotones = 2;
+    private bool boton1Listo = false;
+    private bool boton2Listo = false;
+    private bool abriendo = false;
 
-    [Header("Movimiento")]
-    [SerializeField] private float casillasAMover = 3f;
-    [SerializeField] private float velocidadMovimiento = 2f;
-
-    private Dictionary<int, bool> estadosBotones = new Dictionary<int, bool>();
-
-    private bool abrirPuertas = false;
-
-    private Vector3 posInicialPrincipal;
-    private Vector3 posDestinoPrincipal;
-
-    private Vector3 posInicialAbajo;
-    private Vector3 posDestinoAbajo;
+    private Vector3 posicionCerrada;
+    private Vector3 posicionAbierta;
 
     private void Start()
     {
-        for (int i = 0; i < cantidadBotones; i++)
-        {
-            estadosBotones.Add(i, false);
-        }
-
-        posInicialPrincipal = transform.position;
-        posDestinoPrincipal = posInicialPrincipal + Vector3.up * casillasAMover;
-
-        if (puertaAbajo != null)
-        {
-            posInicialAbajo = puertaAbajo.transform.position;
-            posDestinoAbajo = posInicialAbajo + Vector3.down * casillasAMover;
-        }
+        posicionCerrada = transform.position;
+        // Se moverá hacia arriba en el eje Y
+        posicionAbierta = posicionCerrada + new Vector3(0, distanciaApertura, 0);
     }
 
-    public void EnviarVoto(int idBoton, bool estado)
+    public void EnviarSeñal(int idBoton, bool apretado)
     {
-        photonView.RPC(nameof(RPC_RecibirVoto), RpcTarget.MasterClient, idBoton, estado);
+        // Enviamos la orden a todas las computadoras conectadas
+        photonView.RPC(nameof(RPC_SincronizarBoton), RpcTarget.AllBuffered, idBoton, apretado);
     }
 
     [PunRPC]
-    private void RPC_RecibirVoto(int idBoton, bool estado)
+    private void RPC_SincronizarBoton(int idBoton, bool apretado)
     {
-        if (!PhotonNetwork.IsMasterClient)
-            return;
+        if (abriendo) return; // Si ya se está abriendo, ignoramos
 
-        if (abrirPuertas)
-            return;
+        if (idBoton == 1) boton1Listo = apretado;
+        if (idBoton == 2) boton2Listo = apretado;
 
-        if (!estadosBotones.ContainsKey(idBoton))
-            return;
+        Debug.Log($"[PUERTA] Estado actual -> Botón 1: {boton1Listo} | Botón 2: {boton2Listo}");
 
-        estadosBotones[idBoton] = estado;
-
-        foreach (bool activo in estadosBotones.Values)
+        // ¡CONDICIÓN DE ORO! Si ambos están presionando la Q en este instante
+        if (boton1Listo && boton2Listo)
         {
-            if (!activo)
-                return;
+            abriendo = true;
+            Debug.Log("[PUERTA] ¡LOS DOS BOTONES ACTIVOS! Abriendo puerta...");
         }
-
-        photonView.RPC(nameof(RPC_AbrirPuertas), RpcTarget.AllBuffered);
-    }
-
-    [PunRPC]
-    private void RPC_AbrirPuertas()
-    {
-        abrirPuertas = true;
     }
 
     private void Update()
     {
-        if (!abrirPuertas)
-            return;
-
-        transform.position = Vector3.MoveTowards(
-            transform.position,
-            posDestinoPrincipal,
-            velocidadMovimiento * Time.deltaTime);
-
-        if (puertaAbajo != null)
+        // Desliza la puerta suavemente hasta su posición abierta
+        if (abriendo)
         {
-            puertaAbajo.transform.position = Vector3.MoveTowards(
-                puertaAbajo.transform.position,
-                posDestinoAbajo,
-                velocidadMovimiento * Time.deltaTime);
+            transform.position = Vector3.MoveTowards(transform.position, posicionAbierta, velocidad * Time.deltaTime);
         }
     }
 }
