@@ -74,6 +74,7 @@ public class GranadeThrow : MonoBehaviourPun
 
     private void ThrowGrenade()
     {
+        Debug.Log("ThrowGrenade");
         isAiming = false;
 
         if (!playerItems.ConsumeGrenade())
@@ -85,19 +86,17 @@ public class GranadeThrow : MonoBehaviourPun
     [PunRPC]
     private void RPC_RequestThrowGrenade(Vector3 startPosition, Vector3 destination)
     {
+        Debug.Log("RPC_RequestThrowGrenade");
         if (!PhotonNetwork.IsMasterClient)
             return;
 
-        GameObject grenadeObject = PhotonNetwork.InstantiateRoomObject(
-            grenadePrefab.name,
-            startPosition,
-            Quaternion.identity);
-
+        GameObject grenadeObject = PhotonNetwork.InstantiateRoomObject(grenadePrefab.name,startPosition,Quaternion.identity);
+        Debug.Log(grenadeObject);
         Granade granade = grenadeObject.GetComponent<Granade>();
 
         if (granade != null)
         {
-            granade.Initialize(destination);
+            granade.Initialize(destination,photonView.OwnerActorNr);
         }
     }
 }

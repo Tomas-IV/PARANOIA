@@ -63,6 +63,7 @@ GameObject:
   - component: {fileID: 1406168224204573023}
   - component: {fileID: 8408145500608857685}
   - component: {fileID: 5554977822214391059}
+  - component: {fileID: -6870236947756313585}
   m_Layer: 3
   m_Name: PlayerSpe
   m_TagString: Player
@@ -470,7 +471,20 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   grenadePrefab: {fileID: 5644747118584714227, guid: bbda86471f50e2a4fa441dce670c70ad, type: 3}
   throwPoint: {fileID: 4565417735742402326}
-  maxThrowDistance: 6
+  maxThrowDistance: 10
+--- !u!114 &-6870236947756313585
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 124191237955447779}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 212a88f9831c3204c9e5f30eff6b2ad6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  maxGrenades: 3
 --- !u!1 &623301198302579067
 GameObject:
   m_ObjectHideFlags: 0
