@@ -13,6 +13,7 @@ public class PlayerManager : MonoBehaviourPun
 
     [Header("Health")]
     [SerializeField] private int maxHealth = 100;
+    private PlayerUI playerUI;
 
     public int CurrentHealth { get; private set; }
     public PlayerLifeState LifeState { get; private set; }
@@ -20,12 +21,19 @@ public class PlayerManager : MonoBehaviourPun
     private PlayerMovement movement;
     private Collider2D[] colliders;
 
+    private void Awake()
+    {
+        playerUI = GetComponentInChildren<PlayerUI>();
+    }
+
     private void Start()
     {
         movement = GetComponent<PlayerMovement>();
         colliders = GetComponents<Collider2D>();
 
         CurrentHealth = maxHealth;
+        playerUI.SetHealth(CurrentHealth, maxHealth);
+        playerUI.SetDowned(false);
         LifeState = PlayerLifeState.Alive;
 
         GameManager.Instance.Players.Add(this);
@@ -73,6 +81,7 @@ public class PlayerManager : MonoBehaviourPun
     private void RPC_UpdateHealth(int health)
     {
         CurrentHealth = health;
+        playerUI.SetHealth(CurrentHealth, maxHealth);
     }
 
     [PunRPC]
@@ -84,6 +93,8 @@ public class PlayerManager : MonoBehaviourPun
         movement.SetCanMove(false);
 
         SetHitboxActive(false);
+
+        playerUI.SetDowned(true);
 
         Debug.Log($"{photonView.Owner.NickName} DOWNED");
     }
@@ -105,6 +116,9 @@ public class PlayerManager : MonoBehaviourPun
         movement.SetCanMove(true);
 
         SetHitboxActive(true);
+
+        playerUI.SetDowned(false);
+        playerUI.SetHealth(CurrentHealth, maxHealth);
 
         Debug.Log($"{photonView.Owner.NickName} REVIVED");
     }
