@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using UnityEngine;
 using Photon.Pun;
 using ExitGames.Client.Photon;
@@ -9,72 +8,55 @@ public class DoorController : MonoBehaviourPun, IOnEventCallback
     [Header("Segunda Puerta Opcional")]
     [SerializeField] private GameObject otraPuerta;
 
-    // Código único para el evento de desvanecer (entre 1 y 199)
     private const byte EV_DESVANECER_PUERTA = 88;
 
-    private HashSet<int> botonesActivados = new HashSet<int>();
+    // Control en tiempo real de cada boton
+    private bool boton1Activo = false;
+    private bool boton2Activo = false;
     private bool yaSeDesvanecio = false;
 
     private void OnEnable()
     {
-        // Nos registramos para escuchar los eventos puros de Photon
         PhotonNetwork.AddCallbackTarget(this);
     }
 
     private void OnDisable()
     {
-        // Nos desregistramos al apagarse para evitar errores
         PhotonNetwork.RemoveCallbackTarget(this);
     }
 
-    public void EnviarConfirmacionInput(int idBoton)
+    // El boton manda true si apretan, o false si sueltan la Q
+    public void ActualizarEstadoBoton(int idBoton, bool estaApretado)
     {
-        // CRUCIAL: El cliente solo le avisa al MASTER CLIENT (el server) para evitar duplicados
-        photonView.RPC(nameof(RPC_MasterRegistrarBoton), RpcTarget.MasterClient, idBoton);
+        photonView.RPC(nameof(RPC_MasterSincronizarBoton), RpcTarget.MasterClient, idBoton, estaApretado);
     }
 
     [PunRPC]
-    private void RPC_MasterRegistrarBoton(int idBoton)
+    private void RPC_MasterSincronizarBoton(int idBoton, bool estaApretado)
     {
-        // SOLO el Master Client ejecuta esto
-        if (!PhotonNetwork.IsMasterClient) return;
-        if (yaSeDesvanecio) return;
+        if (!PhotonNetwork.IsMasterClient || yaSeDesvanecio) return;
 
-        if (!botonesActivados.Contains(idBoton))
-        {
-            botonesActivados.Add(idBoton);
-            Debug.Log($"[SERVER] Boton {idBoton} registrado de forma segura. Total: {botonesActivados.Count}/2");
-        }
+        // Actualizamos el estado exacto del boton
+        if (idBoton == 1) boton1Activo = estaApretado;
+        if (idBoton == 2) boton2Activo = estaApretado;
 
-        // SOLO si el Master Client confirma que estan los 2 botones unicos (el 1 y el 2)
-        if (botonesActivados.Count >= 2)
+        // CONDICIÓN ESTRICTA: ¡Ambos tienen que estar presionados al mismo tiempo!
+        if (boton1Activo && boton2Activo)
         {
             yaSeDesvanecio = true;
-            Debug.Log("[SERVER] ¡Sincronizacion perfecta lograda! Disparando RaiseEvent global...");
+            Debug.Log("[SERVER] ¡AMBOS PRESIONANDO Q A LA VEZ! Desvaneciendo...");
 
-            // Enviamos la orden de desvanecimiento de alta prioridad a todos
-            MandarRaiseEventDesvanecer();
+            object[] content = null;
+            RaiseEventOptions raiseEventOptions = new RaiseEventOptions { Receivers = ReceiverGroup.All };
+            SendOptions sendOptions = new SendOptions { Reliability = true };
+            PhotonNetwork.RaiseEvent(EV_DESVANECER_PUERTA, content, raiseEventOptions, sendOptions);
         }
     }
 
-    private void MandarRaiseEventDesvanecer()
-    {
-        object[] content = null; // No necesitamos datos extras, solo el aviso
-
-        // Enviamos a TODO el grupo de receptores de manera confiable (Reliable)
-        RaiseEventOptions raiseEventOptions = new RaiseEventOptions { Receivers = ReceiverGroup.All };
-        SendOptions sendOptions = new SendOptions { Reliability = true };
-
-        PhotonNetwork.RaiseEvent(EV_DESVANECER_PUERTA, content, raiseEventOptions, sendOptions);
-    }
-
-    // ESTO RECIBE EL EVENTO DE BAJO NIVEL EN TODAS LAS COMPUS AL MISMO TIEMPO
     public void OnEvent(EventData photonEvent)
     {
         if (photonEvent.Code == EV_DESVANECER_PUERTA)
         {
-            Debug.Log("[CLIENTE] RaiseEvent recibido. Desvaneciendo puertas en este fotograma.");
-
             if (otraPuerta != null)
             {
                 otraPuerta.SetActive(false);

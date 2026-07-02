@@ -1,6 +1,7 @@
 using UnityEngine;
+using Photon.Pun;
 
-public class ButtonZoneController : MonoBehaviour
+public class ButtonZoneController : MonoBehaviourPun
 {
     [Header("Referencias")]
     [SerializeField] private DoorController puertaObjetivo;
@@ -13,19 +14,35 @@ public class ButtonZoneController : MonoBehaviour
     [SerializeField] private LayerMask capasJugador;
 
     private bool jugadorEnZona = false;
+    private bool qEstaPresionada = false; // Registra si actualmente la estas manteniendo
 
     private void Update()
     {
         Collider2D[] colisiones = Physics2D.OverlapBoxAll(transform.position, tamanoSensor, 0f, capasJugador);
-
         jugadorEnZona = colisiones.Length > 0;
 
-        if (jugadorEnZona && Input.GetKeyDown(KeyCode.Q))
+        // Si estas en la zona y MANTIENES APRETADA la Q
+        if (jugadorEnZona && Input.GetKey(KeyCode.Q))
         {
-            if (puertaObjetivo != null)
+            if (!qEstaPresionada)
             {
-                Debug.Log($"[BOTON] Enviando señal de boton {idBotonUnico}");
-                puertaObjetivo.EnviarConfirmacionInput(idBotonUnico);
+                qEstaPresionada = true; // Empieza a mantener
+                if (puertaObjetivo != null)
+                {
+                    puertaObjetivo.ActualizarEstadoBoton(idBotonUnico, true);
+                }
+            }
+        }
+        // Si sueltas la Q o te sales de la zona, SE CANCELA
+        else
+        {
+            if (qEstaPresionada)
+            {
+                qEstaPresionada = false; // Dejo de mantener
+                if (puertaObjetivo != null)
+                {
+                    puertaObjetivo.ActualizarEstadoBoton(idBotonUnico, false);
+                }
             }
         }
     }
