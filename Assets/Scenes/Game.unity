@@ -3211,12 +3211,16 @@ PrefabInstance:
       value: -90
       objectReference: {fileID: 0}
     - target: {fileID: 6637474738083352069, guid: a727aac198bcab64cb64cd926868558f, type: 3}
+      propertyPath: vidaMax
+      value: 525
+      objectReference: {fileID: 0}
+    - target: {fileID: 6637474738083352069, guid: a727aac198bcab64cb64cd926868558f, type: 3}
       propertyPath: velocidad
       value: 4
       objectReference: {fileID: 0}
     - target: {fileID: 6637474738083352069, guid: a727aac198bcab64cb64cd926868558f, type: 3}
       propertyPath: danioPorGolpe
-      value: 30
+      value: 40
       objectReference: {fileID: 0}
     - target: {fileID: 8694622274600492094, guid: a727aac198bcab64cb64cd926868558f, type: 3}
       propertyPath: m_Name
