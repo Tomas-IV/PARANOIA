@@ -7,31 +7,46 @@ public abstract class Pickup : MonoBehaviourPun
 {
     private bool picked;
 
-    private void OnTriggerEnter(Collider2D other)
+    private void OnCollisionEnter2D(Collision2D collision)
     {
         if (picked)
             return;
 
-        if (!other.CompareTag("Player"))
+        if (!collision.gameObject.CompareTag("Player"))
             return;
 
-        PhotonView playerView = other.GetComponent<PhotonView>();
+        PhotonView playerView = collision.gameObject.GetComponent<PhotonView>();
+
+        if (playerView == null)
+            playerView = collision.gameObject.GetComponentInParent<PhotonView>();
 
         if (playerView == null || !playerView.IsMine)
+            return;
+
+        photonView.RPC(nameof(RPC_RequestPickup),RpcTarget.MasterClient,playerView.ViewID);
+    }
+
+    [PunRPC]
+    public void RPC_RequestPickup(int playerViewID)
+    {
+        if (!PhotonNetwork.IsMasterClient)
+            return;
+
+        if (picked)
+            return;
+
+        PhotonView playerView = PhotonView.Find(playerViewID);
+
+        if (playerView == null)
             return;
 
         picked = true;
 
         Apply(playerView.gameObject);
 
-        photonView.RPC(nameof(RPC_DestroyPickup), RpcTarget.AllBuffered);
+        gameObject.SetActive(false);
     }
 
     protected abstract void Apply(GameObject player);
 
-    [PunRPC]
-    void RPC_DestroyPickup()
-    {
-        PhotonNetwork.Destroy(gameObject);
-    }
 }
