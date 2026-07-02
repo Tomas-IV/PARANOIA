@@ -1367,8 +1367,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 72463faac5f2f9644ac19a97fe0960ce, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  puertaPrincipal: {fileID: 0}
-  idBoton: 1
+  puertaPrincipal: {fileID: 718767991}
+  idBoton: 0
   radioDeteccion: 0.6
 --- !u!61 &739442457
 BoxCollider2D:
@@ -2107,8 +2107,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 72463faac5f2f9644ac19a97fe0960ce, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  puertaPrincipal: {fileID: 0}
-  idBoton: 2
+  puertaPrincipal: {fileID: 718767991}
+  idBoton: 1
   radioDeteccion: 0.6
 --- !u!61 &1081796995
 BoxCollider2D:
