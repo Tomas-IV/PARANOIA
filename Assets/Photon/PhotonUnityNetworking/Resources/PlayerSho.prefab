@@ -263,7 +263,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   hitMask:
     serializedVersion: 2
-    m_Bits: 8
+    m_Bits: 9
   bulletVFXPrefab: {fileID: 4734495279626710502, guid: 547d6782d18756b44b10356acacae4d0, type: 3}
   firePoint: {fileID: 7451805469271511796}
   reference: {fileID: 4325161399373368059}

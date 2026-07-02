@@ -19,11 +19,21 @@ public class PlayerWeapon : MonoBehaviourPun
     private void Start()
     {
         weaponStats = GetComponent<WeaponStats>();
+
+        // Protección: Si nos olvidamos de poner WeaponStats en el Inspector, nos avisa sin romper todo
+        if (weaponStats == null)
+        {
+            Debug.LogError($"¡Falta el componente WeaponStats en el objeto {gameObject.name}! Por favor asignáselo en el Inspector.");
+        }
     }
 
     private void Update()
     {
         if (!photonView.IsMine)
+            return;
+
+        // Si weaponStats no se encontró, salimos del Update para evitar el NullReferenceException
+        if (weaponStats == null)
             return;
 
         if (weaponStats.Automatic)
@@ -67,7 +77,6 @@ public class PlayerWeapon : MonoBehaviourPun
                 Debug.Log("Player encontrado");
                 photonView.RPC(nameof(RPC_RequestDamage), RpcTarget.MasterClient, target.photonView.ViewID, weaponStats.Damage);
             }
-            // Buscamos el componente SeguirJugador en el objeto impactado
             else if (hit.collider.TryGetComponent(out SeguirJugador enemigo))
             {
                 Debug.Log("Zombi detectado por Raycast");
@@ -112,7 +121,6 @@ public class PlayerWeapon : MonoBehaviourPun
         }
     }
 
-    // RPC para procesar el daño al zombi en el Master Client
     [PunRPC]
     private void RPC_RequestEnemyDamage(int enemyViewID, int damage)
     {
