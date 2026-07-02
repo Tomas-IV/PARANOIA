@@ -63,6 +63,7 @@ MonoBehaviour:
   - RPC_RegistrarQJugador
   - RPC_RegistrarQBoton
   - RPC_SincronizarBoton
+  - RPC_SincronizarEntradaBoton
   DisableAutoOpenWizard: 1
   ShowSettings: 0
   DevRegionSetOnce: 1
