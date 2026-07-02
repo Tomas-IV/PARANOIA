@@ -78,7 +78,9 @@ public class PlayerWeapon : MonoBehaviourPun
             else if (hit.collider.TryGetComponent(out SeguirJugador enemigo))
             {
                 Debug.Log("Zombi detectado por Raycast");
-                photonView.RPC(nameof(RPC_RequestEnemyDamage), RpcTarget.MasterClient, enemigo.photonView.ViewID, weaponStats.Damage);
+
+                // CORRECCIÓN: Le mandamos al Master Client el ID de tu jugador local (ActorNumber)
+                photonView.RPC(nameof(RPC_RequestEnemyDamage), RpcTarget.MasterClient, enemigo.photonView.ViewID, weaponStats.Damage, PhotonNetwork.LocalPlayer.ActorNumber);
             }
         }
         else
@@ -141,8 +143,9 @@ public class PlayerWeapon : MonoBehaviourPun
         }
     }
 
+    // CORRECCIÓN: Ahora este RPC acepta un tercer parámetro (idAtacante)
     [PunRPC]
-    private void RPC_RequestEnemyDamage(int enemyViewID, int damage)
+    private void RPC_RequestEnemyDamage(int enemyViewID, int damage, int idAtacante)
     {
         PhotonView view = PhotonView.Find(enemyViewID);
         if (view == null) return;
@@ -150,7 +153,8 @@ public class PlayerWeapon : MonoBehaviourPun
         SeguirJugador enemigo = view.GetComponent<SeguirJugador>();
         if (enemigo != null)
         {
-            enemigo.RecibirDanio(damage);
+            // CORRECCIÓN LÍNEA 153: Llamamos a la nueva función de red del zombi pasándole tu ID
+            enemigo.GetComponent<PhotonView>().RPC("RecibirDanioRed", RpcTarget.MasterClient, damage, idAtacante);
         }
     }
 }

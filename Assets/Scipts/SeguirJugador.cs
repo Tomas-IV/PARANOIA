@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using Photon.Pun;
+using Photon.Realtime;
 
 public class SeguirJugador : MonoBehaviourPun
 {
@@ -83,9 +84,13 @@ public class SeguirJugador : MonoBehaviourPun
         }
     }
 
-    public void RecibirDanio(int cantidadDanio)
+    // --- SISTEMA DE DAÑO Y MUERTE EN RED ---
+
+    // IMPORTANTE: Ahora recibe la cantidad de daño y el ID de quién disparó
+    [PunRPC]
+    public void RecibirDanioRed(int cantidadDanio, int idAtacante)
     {
-        // OJO ACÁ: Si solo el MasterClient puede procesar daño, las kills se le van a sumar solo a él.
+        // Solo el Master Client maneja la vida global para que no haya desincronización
         if (!PhotonNetwork.IsMasterClient) return;
         if (estaMuerto) return;
 
@@ -94,17 +99,27 @@ public class SeguirJugador : MonoBehaviourPun
 
         if (vidaActual <= 0)
         {
-            Morir();
+            estaMuerto = true;
+            rb.velocity = Vector2.zero;
+            Debug.Log($"Zombi muerto. Procesando kill para el jugador con ID: {idAtacante}");
+
+            // El Master Client busca al jugador que disparó usando su ID
+            Player atacante = PhotonNetwork.CurrentRoom.GetPlayer(idAtacante);
+
+            if (atacante != null)
+            {
+                // Le mandamos la orden de sumar baja SOLAMENTE a la PC del jugador que disparó
+                photonView.RPC(nameof(RPC_OtorgarBaja), atacante);
+            }
+
+            PhotonNetwork.Destroy(gameObject);
         }
     }
 
-    private void Morir()
+    // Este RPC solo se va a ejecutar en la computadora del jugador que metió el último tiro
+    [PunRPC]
+    public void RPC_OtorgarBaja()
     {
-        estaMuerto = true;
-        rb.velocity = Vector2.zero;
-        Debug.Log("Zombi muerto. Desactivando y mandando al pool...");
-
-        // --- CONEXIÓN CON EL SCOREBOARD ---
         if (GestorScoreboard.Instancia != null)
         {
             GestorScoreboard.Instancia.RegistrarBaja();
@@ -113,9 +128,6 @@ public class SeguirJugador : MonoBehaviourPun
         {
             Debug.LogError("No se encontró el GestorScoreboard en la escena.");
         }
-        // ----------------------------------
-
-        PhotonNetwork.Destroy(gameObject);
     }
 
     private void BuscarObjetivoMasCercano()
