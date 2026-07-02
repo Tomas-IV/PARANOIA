@@ -15,6 +15,7 @@ GameObject:
   - component: {fileID: -2713866949876703314}
   - component: {fileID: -2949235417619887569}
   - component: {fileID: 3129320080858315362}
+  - component: {fileID: -5173285308844800871}
   m_Layer: 0
   m_Name: Enemy
   m_TagString: Enemy
@@ -103,6 +104,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   velocidad: 5
   distanciaDeteccion: 900
+  danioPorGolpe: 10
+  tiempoEntreAtaques: 1.5
   vidaMax: 105
 --- !u!50 &-8267415931280761752
 Rigidbody2D:
@@ -190,3 +193,19 @@ MonoBehaviour:
   m_SynchronizeRotation: 1
   m_SynchronizeScale: 0
   m_UseLocal: 1
+--- !u!114 &-5173285308844800871
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8694622274600492094}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0e7cb724808c322458aa4d15f5035fa9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_SynchronizeVelocity: 1
+  m_SynchronizeAngularVelocity: 0
+  m_TeleportEnabled: 0
+  m_TeleportIfDistanceGreaterThan: 3
