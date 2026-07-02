@@ -1999,14 +1999,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   datosDelJuego:
-    nicknameJugador1: Jugador 1
-    nicknameJugador2: Jugador 2
+    ultimoNickname: JugadorNuevo
+    avatarSeleccionado: 0
+    partidasGanadas: 0
+    partidasPerdidas: 0
     maxWavesSurvived: 0
     totalZombiesKilled: 0
-  inputP1: {fileID: 0}
-  inputP2: {fileID: 0}
-  textoOleadaRecord: {fileID: 0}
-  textoZombiesTotales: {fileID: 0}
 --- !u!114 &885037855
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3203,7 +3201,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!212 &1435571898
 SpriteRenderer:
   m_ObjectHideFlags: 0
@@ -3394,6 +3392,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   minPlayers: 2
+  fondoVictoria: {fileID: 0}
+  fondoDerrota: {fileID: 0}
 --- !u!114 &1674306606
 MonoBehaviour:
   m_ObjectHideFlags: 0

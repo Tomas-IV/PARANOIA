@@ -76,6 +76,8 @@ MonoBehaviour:
   - RPC_OtorgarBaja
   - RPC_DestroyPickup
   - RPC_RequestThrowGrenade
+  - RPC_RegistrarMuerte
+  - RPC_RequestPickup
   DisableAutoOpenWizard: 1
   ShowSettings: 0
   DevRegionSetOnce: 1
