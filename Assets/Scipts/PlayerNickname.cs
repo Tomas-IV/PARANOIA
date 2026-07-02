@@ -1,3 +1,4 @@
+
 using UnityEngine;
 using Photon.Pun;
 using TMPro;
@@ -17,6 +18,15 @@ public class PlayerNickname : MonoBehaviourPunCallbacks
     private void Start()
     {
         nicknameText.text = photonView.Owner.NickName;
+
+        // --- CONEXIÓN CON SAVEMANAGER ---
+        // Chequeamos si es nuestro propio jugador para no sobreescribir nuestro save 
+        // con el nombre de los demás conectados a la sala.
+        if (photonView.IsMine && SaveManager.Instancia != null)
+        {
+            SaveManager.Instancia.datosDelJuego.ultimoNickname = PhotonNetwork.LocalPlayer.NickName;
+        }
+
         TrySetTeamColor();
     }
 
@@ -37,7 +47,6 @@ public class PlayerNickname : MonoBehaviourPunCallbacks
     private void ApplyColor()
     {
         nicknameText.color = (team == 0) ? team0Color : team1Color;
-
         Debug.Log($"[NICKNAME] {photonView.Owner.NickName} Team {team}");
     }
 

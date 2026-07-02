@@ -1,95 +1,125 @@
-using UnityEngine;
 using System.IO;
-using TMPro; // Usamos TextMeshPro para los textos del menú
+using UnityEngine;
+using UnityEngine.UI;
+using Photon.Pun;
 
-// --- LA ESTRUCTURA DE DATOS QUE SE GUARDA ---
+// --- ESTRUCTURA DE DATOS ---
 [System.Serializable]
 public class PlayerData
 {
-    public string nicknameJugador1 = "Jugador 1";
-    public string nicknameJugador2 = "Jugador 2";
-    public int maxWavesSurvived = 0;   // Récord de oleadas sobrevivientes
-    public int totalZombiesKilled = 0; // Total acumulado de zombis muertos
+    // Datos nuevos que pediste
+    public string ultimoNickname = "JugadorNuevo";
+    public int avatarSeleccionado = 0; // Usamos un int para guardar el ID o índice del avatar
+    public int partidasGanadas = 0;
+    public int partidasPerdidas = 0;
+
+    // Datos anteriores (los dejo por si aún los usas en el modo zombies)
+    public int maxWavesSurvived = 0;
+    public int totalZombiesKilled = 0;
 }
 
-// --- EL MANEJADOR PRINCIPAL (VA SOLO EN EL MAIN MENU) ---
-public class SaveManager : MonoBehaviour
+// --- MANEJADOR PRINCIPAL ---
+public class SaveManager : MonoBehaviourPunCallbacks
 {
-    [Header("Datos en Memoria")]
+    public static SaveManager Instancia; // Creado como Singleton para acceder fácil desde otros scripts
+
     public PlayerData datosDelJuego = new PlayerData();
-
-    [Header("UI del Main Menu (Asignar aquí)")]
-    public TMP_InputField inputP1;
-    public TMP_InputField inputP2;
-    public TMP_Text textoOleadaRecord;
-    public TMP_Text textoZombiesTotales;
-
     private string rutaArchivo;
 
     private void Awake()
     {
-        // 1. Esto hace que el objeto viaje del Menú al Game sin borrarse
-        DontDestroyOnLoad(gameObject);
+        // Configuramos el Singleton
+        if (Instancia == null)
+        {
+            Instancia = this;
+            DontDestroyOnLoad(gameObject);
+        }
+        else
+        {
+            Destroy(gameObject);
+            return;
+        }
 
-        // 2. Definimos la ruta del archivo .json en la PC
         rutaArchivo = Path.Combine(Application.persistentDataPath, "progreso_zombies.json");
 
-        // 3. Cargamos los datos guardados y actualizamos la pantalla del menú
+        // Cargamos los datos al iniciar
         CargarDatos();
-        ActualizarInterfazMenu();
+
+        // Comenté la creación de UI automática por ahora para que no te estorbe en la partida, 
+        // ya que el guardado ahora es interno con la tecla R.
+        // CrearInterfazVisual(); 
     }
 
-    // Muestra los datos del JSON en los textos de tu menú principal
-    public void ActualizarInterfazMenu()
+    private void Update()
     {
-        if (inputP1 != null) inputP1.text = datosDelJuego.nicknameJugador1;
-        if (inputP2 != null) inputP2.text = datosDelJuego.nicknameJugador2;
-
-        if (textoOleadaRecord != null)
-            textoOleadaRecord.text = "Máxima Oleada Lograda: " + datosDelJuego.maxWavesSurvived;
-
-        if (textoZombiesTotales != null)
-            textoZombiesTotales.text = "Total Zombis Eliminados: " + datosDelJuego.totalZombiesKilled;
-    }
-
-    // --- GUARDAR DATOS (Escribe el archivo JSON en la PC) ---
-    public void GuardarDatos()
-    {
-        // Guardamos los nombres actuales de los inputs antes de escribir el archivo
-        if (inputP1 != null) datosDelJuego.nicknameJugador1 = inputP1.text;
-        if (inputP2 != null) datosDelJuego.nicknameJugador2 = inputP2.text;
-
-        string textoJson = JsonUtility.ToJson(datosDelJuego, true); //
-
-        // Usamos StreamWriter con bloque 'using' como en el video
-        using (StreamWriter writer = new StreamWriter(rutaArchivo))
+        // Guardado al presionar la tecla R durante la partida
+        if (Input.GetKeyDown(KeyCode.R))
         {
-            writer.Write(textoJson);
+            GuardarDatosEnPartida();
         }
-        Debug.Log("Progreso guardado en: " + rutaArchivo);
     }
 
-    // --- CARGAR DATOS (Lee el archivo JSON de la PC) ---
+    // --- LÓGICA DE GUARDADO ---
+    public void GuardarDatosEnPartida()
+    {
+        // 1. RECOPILAR DATOS: 
+        // Aquí es donde el SaveManager le pide la info a tus otros scripts antes de guardar.
+        // NOTA: Tendrás que adaptar estas líneas dependiendo de cómo se llamen las variables en tus otros scripts.
+
+        if (PhotonNetwork.IsConnected && PhotonNetwork.LocalPlayer != null)
+        {
+            datosDelJuego.ultimoNickname = PhotonNetwork.LocalPlayer.NickName;
+        }
+
+        /* 
+        EJEMPLOS DE CÓMO CONECTARLO CON TUS OTROS SCRIPTS (Descomenta y adapta según tu código):
+        
+        // Para el Avatar (asumiendo que tu script se llama AvatarSelection)
+        // datosDelJuego.avatarSeleccionado = AvatarSelection.instancia.obtenerAvatarActual();
+
+        // Para las partidas ganadas/perdidas (asumiendo que GameManager lleva la cuenta)
+        // datosDelJuego.partidasGanadas = GameManager.instancia.victoriasTotales;
+        // datosDelJuego.partidasPerdidas = GameManager.instancia.derrotasTotales;
+        */
+
+        // 2. GUARDAR EN EL ARCHIVO JSON
+        string textoJson = JsonUtility.ToJson(datosDelJuego, true);
+        File.WriteAllText(rutaArchivo, textoJson);
+
+        Debug.Log("¡Progreso guardado con éxito presionando R!");
+        Debug.Log($"Guardado: Nick {datosDelJuego.ultimoNickname} | Avatar ID {datosDelJuego.avatarSeleccionado} | G/P {datosDelJuego.partidasGanadas}/{datosDelJuego.partidasPerdidas}");
+    }
+
     public void CargarDatos()
     {
         if (File.Exists(rutaArchivo))
         {
-            string textoJson = "";
-
-            // Usamos StreamReader con bloque 'using' para leer
-            using (StreamReader reader = new StreamReader(rutaArchivo))
-            {
-                textoJson = reader.ReadToEnd(); //
-            }
-
-            // Convertimos el texto de vuelta a variables
-            datosDelJuego = JsonUtility.FromJson<PlayerData>(textoJson); //
+            datosDelJuego = JsonUtility.FromJson<PlayerData>(File.ReadAllText(rutaArchivo));
             Debug.Log("Datos cargados correctamente.");
         }
         else
         {
-            Debug.Log("No hay archivo previo. Iniciando datos en limpio.");
-            datosDelJuego = new PlayerData();
+            Debug.Log("No hay archivo de guardado previo, se creará uno nuevo al guardar.");
         }
+    }
+
+    // --- MÉTODOS PARA MODIFICAR DATOS DESDE OTROS SCRIPTS ---
+    // Puedes llamar a estos métodos desde GameManager cuando termine una partida
+    public void SumarVictoria()
+    {
+        datosDelJuego.partidasGanadas++;
+        GuardarDatosEnPartida();
+    }
+
+    public void SumarDerrota()
+    {
+        datosDelJuego.partidasPerdidas++;
+        GuardarDatosEnPartida();
+    }
+
+    public void EstablecerAvatar(int idAvatar)
+    {
+        datosDelJuego.avatarSeleccionado = idAvatar;
+        // No guardamos automáticamente aquí para esperar a que el jugador presione R o termine la partida
     }
 }

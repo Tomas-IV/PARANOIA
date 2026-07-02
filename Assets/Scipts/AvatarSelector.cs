@@ -9,14 +9,30 @@ public class AvatarSelector : MonoBehaviour
         PlayerPrefs.SetInt("Avatar", (int)PlayerAvatar.Specialist);
         PlayerPrefs.Save();
         PlayerInfo.SetAvatar(PlayerAvatar.Specialist);
+
+        // --- CONEXIÓN CON SAVEMANAGER ---
+        if (SaveManager.Instancia != null)
+        {
+            SaveManager.Instancia.EstablecerAvatar((int)PlayerAvatar.Specialist);
+            SaveManager.Instancia.GuardarDatosEnPartida(); // Forzamos el guardado del JSON
+        }
+
         Debug.Log("Avatar seleccionado: Especialista");
     }
-    
+
     public void SelectShooter()
     {
         PlayerPrefs.SetInt("Avatar", (int)PlayerAvatar.Shooter);
         PlayerPrefs.Save();
         PlayerInfo.SetAvatar(PlayerAvatar.Shooter);
+
+        // --- CONEXIÓN CON SAVEMANAGER ---
+        if (SaveManager.Instancia != null)
+        {
+            SaveManager.Instancia.EstablecerAvatar((int)PlayerAvatar.Shooter);
+            SaveManager.Instancia.GuardarDatosEnPartida(); // Forzamos el guardado del JSON
+        }
+
         Debug.Log("Avatar seleccionado: Tirador");
     }
 
@@ -24,9 +40,7 @@ public class AvatarSelector : MonoBehaviour
     {
         if (PlayerPrefs.HasKey("Avatar"))
         {
-            PlayerAvatar avatar =
-                (PlayerAvatar)PlayerPrefs.GetInt("Avatar");
-
+            PlayerAvatar avatar = (PlayerAvatar)PlayerPrefs.GetInt("Avatar");
             PlayerInfo.SetAvatar(avatar);
         }
     }
