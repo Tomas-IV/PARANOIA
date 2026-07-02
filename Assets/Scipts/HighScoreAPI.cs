@@ -1,17 +1,16 @@
 using System.Collections;
 using UnityEngine;
 using UnityEngine.Networking;
-using TMPro;
+using UnityEngine.UI; // Usamos el clásico en vez de TMPro
 using Newtonsoft.Json;
-using UnityEngine.UI;
 
 public class HighScoreAPI : MonoBehaviour
 {
-    // Variables internas para la UI generada por código
+    // Variables internas usando el Text clásico de Unity
     private GameObject rankingCanvas;
-    private TextMeshProUGUI textoCargando;
-    private TextMeshProUGUI textoPosicion1;
-    private TextMeshProUGUI textoPosicion2;
+    private Text textoCargando;
+    private Text textoPosicion1;
+    private Text textoPosicion2;
 
     [Header("Configuración de Red")]
     private const string URL_API = "https://jsonplaceholder.typicode.com/users";
@@ -34,7 +33,7 @@ public class HighScoreAPI : MonoBehaviour
     private IEnumerator ObtenerHighScores()
     {
         textoCargando.gameObject.SetActive(true);
-        textoCargando.text = "Conectando al servidor de puntuaciones...";
+        textoCargando.text = "Conectando al servidor...";
         rankingCanvas.SetActive(true);
 
         using (UnityWebRequest req = UnityWebRequest.Get(URL_API))
@@ -44,30 +43,30 @@ public class HighScoreAPI : MonoBehaviour
             if (req.result != UnityWebRequest.Result.Success)
             {
                 Debug.LogError("Error al conectar con la API de HighScores: " + req.error);
-                textoCargando.text = "Error al cargar el ranking.";
+                textoCargando.text = "Error al conectar.";
                 yield break;
             }
 
             string json = req.downloadHandler.text;
 
-            // Deserializamos el JSON usando un arreglo (Array) como requiere tu planilla
+            // Deserializamos el JSON usando el arreglo
             ZombiePlayerData[] listaTopJugadores = JsonConvert.DeserializeObject<ZombiePlayerData[]>(json);
 
             textoCargando.gameObject.SetActive(false);
 
             if (listaTopJugadores != null && listaTopJugadores.Length >= 2)
             {
-                // Mostramos los datos de los mejores jugadores en los textos creados
+                // Mostramos los datos de los mejores jugadores
                 textoPosicion1.text = $"1. {listaTopJugadores[0].name} - {listaTopJugadores[0].id * 143} Zombis Muertos";
                 textoPosicion2.text = $"2. {listaTopJugadores[1].name} - {listaTopJugadores[1].id * 92} Zombis Muertos";
             }
         }
     }
 
-    // --- ESTA FUNCIÓN HACE TODO EL PASO 2 POR VOS ---
+    // --- INTERFAZ CREADA 100% POR CÓDIGO CON UI CLÁSICA ---
     private void CrearInterfazPorCodigo()
     {
-        // 1. Crear el Canvas Principal de Rediseño de UI
+        // 1. Crear el Canvas Principal
         GameObject canvasObj = new GameObject("RankingCanvas_Auto");
         Canvas canvas = canvasObj.AddComponent<Canvas>();
         canvas.renderMode = RenderMode.ScreenSpaceOverlay;
@@ -76,7 +75,7 @@ public class HighScoreAPI : MonoBehaviour
         rankingCanvas = canvasObj;
 
         // 2. Crear un fondo oscuro para el Ranking
-        GameObject fondoObj = new GameObject("FondoFoscuro");
+        GameObject fondoObj = new GameObject("FondoOscuro");
         fondoObj.transform.SetParent(canvasObj.transform, false);
         Image imagenFondo = fondoObj.AddComponent<Image>();
         imagenFondo.color = new Color(0, 0, 0, 0.85f); // Negro transparente
@@ -84,38 +83,45 @@ public class HighScoreAPI : MonoBehaviour
         RectTransform rtFondo = fondoObj.GetComponent<RectTransform>();
         rtFondo.anchorMin = new Vector2(0.5f, 0.5f);
         rtFondo.anchorMax = new Vector2(0.5f, 0.5f);
-        rtFondo.sizeDelta = new Vector2(500, 400); // Tamaño de la ventana del ranking
+        rtFondo.sizeDelta = new Vector2(600, 400); // Tamaño de la ventana del ranking
 
-        // 3. Crear el Texto de "Cargando..."
-        textoCargando = CrearTextoGenerico("TextoCargando", fondoObj.transform, "Presioná H para cargar Ranking", 24, new Vector2(0, 100));
+        // Buscamos la fuente Arial nativa de Unity para evitar que el texto se rompa al crearlo de cero
+        Font fuentePorDefecto = Resources.GetBuiltinResource<Font>("Arial.ttf");
 
-        // 4. Crear el Texto para la Posición 1
-        textoPosicion1 = CrearTextoGenerico("TextoPosicion1", fondoObj.transform, "", 28, new Vector2(0, 20));
+        // 3. Crear los textos pasándoles la fuente
+        textoCargando = CrearTextoGenerico("TextoCargando", fondoObj.transform, "Presioná H para cargar Ranking", 24, new Vector2(0, 100), fuentePorDefecto);
+
+        textoPosicion1 = CrearTextoGenerico("TextoPosicion1", fondoObj.transform, "", 28, new Vector2(0, 20), fuentePorDefecto);
         textoPosicion1.color = Color.yellow; // Color oro para el primer puesto
 
-        // 5. Crear el Texto para la Posición 2
-        textoPosicion2 = CrearTextoGenerico("TextoPosicion2", fondoObj.transform, "", 24, new Vector2(0, -40));
+        textoPosicion2 = CrearTextoGenerico("TextoPosicion2", fondoObj.transform, "", 24, new Vector2(0, -40), fuentePorDefecto);
+        textoPosicion2.color = Color.white;
 
-        // Al inicio ocultamos todo el Canvas para esperar la tecla H
+        // Ocultamos el Canvas hasta que se presione la H
         rankingCanvas.SetActive(false);
     }
 
-    // Función auxiliar para ahorrarnos líneas al fabricar textos de TextMeshPro
-    private TextMeshProUGUI CrearTextoGenerico(string nombre, Transform padre, string textoInicial, float tamañoLetra, Vector2 posicion)
+    // Función auxiliar ajustada para Text clásico
+    private Text CrearTextoGenerico(string nombre, Transform padre, string textoInicial, int tamañoLetra, Vector2 posicion, Font fuente)
     {
         GameObject go = new GameObject(nombre);
         go.transform.SetParent(padre, false);
 
-        TextMeshProUGUI tmp = go.AddComponent<TextMeshProUGUI>();
-        tmp.text = textoInicial;
-        tmp.fontSize = tamañoLetra;
-        tmp.alignment = TextAlignmentOptions.Center;
+        Text textoClasico = go.AddComponent<Text>();
+        textoClasico.text = textoInicial;
+        textoClasico.fontSize = tamañoLetra;
+        textoClasico.font = fuente; // Asignamos la fuente vital
+        textoClasico.alignment = TextAnchor.MiddleCenter;
+
+        // Evita que las palabras largas desaparezcan si no entran en la caja
+        textoClasico.horizontalOverflow = HorizontalWrapMode.Overflow;
+        textoClasico.verticalOverflow = VerticalWrapMode.Overflow;
 
         RectTransform rt = go.GetComponent<RectTransform>();
-        rt.sizeDelta = new Vector2(450, 50);
+        rt.sizeDelta = new Vector2(550, 50);
         rt.anchoredPosition = posicion;
 
-        return tmp;
+        return textoClasico;
     }
 }
 
