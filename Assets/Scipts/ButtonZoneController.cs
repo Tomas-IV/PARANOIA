@@ -39,20 +39,34 @@ public class ButtonZoneController : MonoBehaviour
             }
         }
 
+        // --- DEBUGS NUEVOS ---
+        // Este if solo se ejecuta en el instante exacto en que apretás la Q
+        if (Input.GetKeyDown(KeyCode.Q))
+        {
+            Debug.Log($"[Botón {idBoton}] ¡Apretaste la Q! ¿Detectó a tu jugador en el área?: {hayJugadorMio}");
+
+            if (!hayJugadorMio)
+            {
+                Debug.LogWarning($"[Botón {idBoton}] Apretaste Q pero no hay un jugador tuyo en el área. ¡Revisá el Radio Deteccion ({radioDeteccion}) en el Inspector!");
+            }
+        }
+
         bool estadoActual = hayJugadorMio && Input.GetKey(KeyCode.Q);
 
         if (estadoActual != presionandoQ)
         {
             presionandoQ = estadoActual;
 
+            // Este Debug te avisa cada vez que cambia el estado y envía el voto
+            Debug.Log($"[Botón {idBoton}] Cambió el estado a: {presionandoQ}. Enviando voto a la puerta...");
+
             if (puertaPrincipal != null)
             {
-                // Acá está la línea corregida con el nombre exacto
                 puertaPrincipal.EnviarVoto(idBoton, presionandoQ);
             }
             else
             {
-                Debug.LogError($"¡El botón {idBoton} no tiene la puerta asignada en el Inspector!");
+                Debug.LogError($"[Botón {idBoton}] ¡No tiene la puerta asignada en el Inspector!");
             }
         }
     }
