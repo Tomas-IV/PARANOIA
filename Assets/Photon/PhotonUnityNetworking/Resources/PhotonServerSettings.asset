@@ -57,6 +57,7 @@ MonoBehaviour:
   - RecibirMensajeGameplay
   - RPC_Defeat
   - RPC_Victory
+  - RPC_RequestEnemyDamage
   DisableAutoOpenWizard: 1
   ShowSettings: 0
   DevRegionSetOnce: 1

@@ -1,11 +1,16 @@
 ﻿using UnityEngine;
-using Photon.Pun; // <-- Clave para heredar de MonoBehaviourPun
+using Photon.Pun;
 
 public class SeguirJugador : MonoBehaviourPun
 {
     [Header("Configuración de Movimiento")]
-    [SerializeField] private float velocidad = 5f;
+    [SerializeField] private float velocidad = 2.5f;
     [SerializeField] private float distanciaDeteccion = 30f;
+
+    [Header("Configuración de Vida")]
+    [SerializeField] private int vidaMax = 105; // 105 hp hace que el Shooter (35 dmg) lo mate de 3 tiros y el Specialist (15 dmg) de 7
+    private int vidaActual;
+    private bool estaMuerto = false;
 
     private Transform targetJugador;
     private Rigidbody2D rb;
@@ -13,17 +18,16 @@ public class SeguirJugador : MonoBehaviourPun
     private void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
+        vidaActual = vidaMax;
     }
 
     private void FixedUpdate()
     {
-        // 🌟 REGLA DE PHOTON: Solo el Master Client calcula el movimiento y la lógica de la IA
+        if (estaMuerto) return;
         if (!PhotonNetwork.IsMasterClient) return;
 
-        // Buscamos cuál es el jugador en red más cercano en este momento
         BuscarObjetivoMasCercano();
 
-        // Si no hay jugadores vivos o en la sala, nos quedamos quietos
         if (targetJugador == null)
         {
             rb.velocity = Vector2.zero;
@@ -32,11 +36,13 @@ public class SeguirJugador : MonoBehaviourPun
 
         float distancia = Vector2.Distance(transform.position, targetJugador.position);
 
-        // Si está en rango de visión, avanzamos físicamente hacia él
         if (distancia <= distanciaDeteccion)
         {
             Vector2 direccion = (targetJugador.position - transform.position).normalized;
             rb.MovePosition(rb.position + direccion * velocidad * Time.fixedDeltaTime);
+
+            float anguloZ = Mathf.Atan2(direccion.y, direccion.x) * Mathf.Rad2Deg;
+            rb.MoveRotation(anguloZ);
         }
         else
         {
@@ -44,10 +50,31 @@ public class SeguirJugador : MonoBehaviourPun
         }
     }
 
-    // Algoritmo dinámico para detectar a los personajes instanciados por el PlayerSpawner
+    // FUNCIÓN CLAVE: Recibe el daño exacto enviado desde el Raycast del arma
+    public void RecibirDanio(int cantidadDanio)
+    {
+        if (!PhotonNetwork.IsMasterClient) return;
+        if (estaMuerto) return;
+
+        vidaActual -= cantidadDanio;
+        Debug.Log($"Zombi dañado con {cantidadDanio}. Vida restante: {vidaActual}");
+
+        if (vidaActual <= 0)
+        {
+            Morir();
+        }
+    }
+
+    private void Morir()
+    {
+        estaMuerto = true;
+        rb.velocity = Vector2.zero;
+        Debug.Log("Zombi muerto. Eliminando de la red...");
+        PhotonNetwork.Destroy(gameObject);
+    }
+
     private void BuscarObjetivoMasCercano()
     {
-        // Buscamos a todos los personajes en el mapa usando la etiqueta "Player"
         GameObject[] jugadoresEnEscena = GameObject.FindGameObjectsWithTag("Player");
 
         if (jugadoresEnEscena.Length == 0)
@@ -65,12 +92,11 @@ public class SeguirJugador : MonoBehaviourPun
             float distancia = Vector3.Distance(jugador.transform.position, posicionActual);
             if (distancia < distanciaMinima)
             {
-                distanciaMinima = distancia;
+                distanciaMinima = distancia; 
                 masCercano = jugador;
             }
         }
 
-        // Asignamos el transform del personaje más cercano como el objetivo de caza
         if (masCercano != null)
         {
             targetJugador = masCercano.transform;

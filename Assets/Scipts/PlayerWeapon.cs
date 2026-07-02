@@ -54,7 +54,7 @@ public class PlayerWeapon : MonoBehaviourPun
         Vector2 origin = firePoint.position;
         Vector2 direction = reference.right;
 
-        RaycastHit2D hit = Physics2D.Raycast(origin,direction,weaponStats.Range,hitMask);
+        RaycastHit2D hit = Physics2D.Raycast(origin, direction, weaponStats.Range, hitMask);
 
         Vector2 hitPoint;
 
@@ -65,7 +65,13 @@ public class PlayerWeapon : MonoBehaviourPun
             if (hit.collider.TryGetComponent(out PlayerManager target))
             {
                 Debug.Log("Player encontrado");
-                photonView.RPC(nameof(RPC_RequestDamage),RpcTarget.MasterClient,target.photonView.ViewID,weaponStats.Damage);
+                photonView.RPC(nameof(RPC_RequestDamage), RpcTarget.MasterClient, target.photonView.ViewID, weaponStats.Damage);
+            }
+            // Buscamos el componente SeguirJugador en el objeto impactado
+            else if (hit.collider.TryGetComponent(out SeguirJugador enemigo))
+            {
+                Debug.Log("Zombi detectado por Raycast");
+                photonView.RPC(nameof(RPC_RequestEnemyDamage), RpcTarget.MasterClient, enemigo.photonView.ViewID, weaponStats.Damage);
             }
         }
         else
@@ -75,8 +81,7 @@ public class PlayerWeapon : MonoBehaviourPun
         }
 
         SpawnBulletFX(origin, hitPoint);
-
-        photonView.RPC(nameof(RPC_PlayBulletFX),RpcTarget.Others,origin,hitPoint);
+        photonView.RPC(nameof(RPC_PlayBulletFX), RpcTarget.Others, origin, hitPoint);
     }
 
     private void SpawnBulletFX(Vector2 origin, Vector2 hitPoint)
@@ -84,8 +89,7 @@ public class PlayerWeapon : MonoBehaviourPun
         Debug.Log("Spawn Bullet");
         GameObject bullet = Instantiate(bulletVFXPrefab, origin, Quaternion.identity);
 
-        bullet.GetComponent<BulletVisual>()
-            .Init(hitPoint, bulletSpeed);
+        bullet.GetComponent<BulletVisual>().Init(hitPoint, bulletSpeed);
         Debug.Log(bullet.name);
     }
 
@@ -96,18 +100,29 @@ public class PlayerWeapon : MonoBehaviourPun
     }
 
     [PunRPC]
-    private void RPC_RequestDamage(int targetViewID,int damage)
+    private void RPC_RequestDamage(int targetViewID, int damage)
     {
         PhotonView view = PhotonView.Find(targetViewID);
-
-        if (view == null)
-            return;
+        if (view == null) return;
 
         PlayerManager target = view.GetComponent<PlayerManager>();
-
         if (target != null)
         {
             target.TakeDamage(damage);
+        }
+    }
+
+    // RPC para procesar el daño al zombi en el Master Client
+    [PunRPC]
+    private void RPC_RequestEnemyDamage(int enemyViewID, int damage)
+    {
+        PhotonView view = PhotonView.Find(enemyViewID);
+        if (view == null) return;
+
+        SeguirJugador enemigo = view.GetComponent<SeguirJugador>();
+        if (enemigo != null)
+        {
+            enemigo.RecibirDanio(damage);
         }
     }
 }
