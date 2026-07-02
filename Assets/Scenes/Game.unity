@@ -1367,7 +1367,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   puertaPrincipal: {fileID: 718767991}
   idBoton: 0
-  radioDeteccion: 0.6
+  radioDeteccion: 2
 --- !u!61 &739442457
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -2107,7 +2107,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   puertaPrincipal: {fileID: 718767991}
   idBoton: 1
-  radioDeteccion: 0.6
+  radioDeteccion: 2
 --- !u!61 &1081796995
 BoxCollider2D:
   m_ObjectHideFlags: 0
