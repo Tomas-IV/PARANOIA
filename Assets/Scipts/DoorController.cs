@@ -4,31 +4,26 @@ using Photon.Pun;
 
 public class DoorController : MonoBehaviourPun
 {
-    [Header("Configuracion de Apertura")]
-    [SerializeField] private Vector2 posicionAbiertaOffset = new Vector2(0f, 4f);
-    [SerializeField] private float velocidadApertura = 3f;
-
-    private Vector2 posicionInicial;
-    private Vector2 posicionObjetivo;
-    private bool debeAbrirse = false;
-
     private HashSet<int> jugadoresListos = new HashSet<int>();
-
-    private void Start()
-    {
-        posicionInicial = transform.position;
-        posicionObjetivo = posicionInicial + posicionAbiertaOffset;
-    }
+    private float tiempoPrimerClick;
+    private float ventanaTiempo = 2f; // Los 2 segundos límite
+    private bool comenzandoCuenta = false;
+    private bool yaSeDestruyo = false;
 
     private void Update()
     {
-        if (debeAbrirse)
+        if (!PhotonNetwork.IsMasterClient) return;
+        if (yaSeDestruyo) return;
+
+        // Si ya paso el tiempo limite de 2 segundos y no completaron el objetivo, reiniciamos
+        if (comenzandoCuenta && Time.time > tiempoPrimerClick + ventanaTiempo)
         {
-            transform.position = Vector3.Lerp(transform.position, (Vector3)posicionObjetivo, Time.deltaTime * velocidadApertura);
+            Debug.Log("Tiempo agotado (pasaron 2 segundos). Coordinen de nuevo.");
+            jugadoresListos.Clear();
+            comenzandoCuenta = false;
         }
     }
 
-    // Metodo publico que llama el boton localmente
     public void EnviarConfirmacionInput()
     {
         photonView.RPC(nameof(RPC_RegistrarQJugador), RpcTarget.MasterClient, PhotonNetwork.LocalPlayer.ActorNumber);
@@ -38,23 +33,30 @@ public class DoorController : MonoBehaviourPun
     private void RPC_RegistrarQJugador(int actorNumber)
     {
         if (!PhotonNetwork.IsMasterClient) return;
-        if (debeAbrirse) return;
+        if (yaSeDestruyo) return;
+
+        // Si es el primer jugador en tocar la Q, arranca el contador de 2 segundos
+        if (jugadoresListos.Count == 0)
+        {
+            tiempoPrimerClick = Time.time;
+            comenzandoCuenta = true;
+            Debug.Log("Primer jugador listo. Tienen 2 segundos...");
+        }
 
         if (!jugadoresListos.Contains(actorNumber))
         {
             jugadoresListos.Add(actorNumber);
-            Debug.Log("Jugador " + actorNumber + " presiono Q en el boton. Listos: " + jugadoresListos.Count + "/" + PhotonNetwork.CurrentRoom.PlayerCount);
+            Debug.Log("Jugador " + actorNumber + " listo. Total: " + jugadoresListos.Count + "/" + PhotonNetwork.CurrentRoom.PlayerCount);
         }
 
+        // Si ambos jugadores tocaron dentro de la ventana de tiempo
         if (jugadoresListos.Count >= PhotonNetwork.CurrentRoom.PlayerCount && PhotonNetwork.CurrentRoom.PlayerCount > 0)
         {
-            photonView.RPC(nameof(RPC_AbrirPuertaGlobal), RpcTarget.All);
-        }
-    }
+            yaSeDestruyo = true;
+            Debug.Log("Sincronizacion perfecta dentro de los 2 segundos. Desvaneciendo puerta...");
 
-    [PunRPC]
-    private void RPC_AbrirPuertaGlobal()
-    {
-        debeAbrirse = true;
+            // El Master Client destruye el objeto de la red para que desaparezca en todas las pantallas
+            PhotonNetwork.Destroy(gameObject);
+        }
     }
 }
