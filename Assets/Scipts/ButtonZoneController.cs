@@ -1,13 +1,16 @@
 using UnityEngine;
 using Photon.Pun;
 
-public class ButtonZoneController : MonoBehaviourPun
+// Nota: ya no hereda de MonoBehaviourPun porque este script no envia RPCs propios,
+// solo le avisa localmente a la puerta. Evita el warning de "PhotonView no encontrado".
+public class ButtonZoneController : MonoBehaviour
 {
     [Header("Referencias")]
+    [Tooltip("IMPORTANTE: los dos botones (Button y Button (1)) deben apuntar al MISMO DoorController.")]
     [SerializeField] private DoorController puertaObjetivo;
 
     [Header("Configuracion de Equipo")]
-    [SerializeField, Tooltip("Asignar 1 o 2: cada botón debe tener un id distinto (1 y 2).")]
+    [SerializeField, Tooltip("Asignar 1 o 2: cada boton debe tener un id distinto (1 y 2).")]
     private int idBotonUnico = 1;
 
     [Header("Configuracion del Sensor")]
@@ -25,7 +28,7 @@ public class ButtonZoneController : MonoBehaviourPun
 
     private void OnValidate()
     {
-        // Forzar id válido (1 o 2) en el inspector
+        // Forzar id valido (1 o 2) en el inspector
         if (idBotonUnico < 1) idBotonUnico = 1;
         if (idBotonUnico > 2) idBotonUnico = 2;
     }

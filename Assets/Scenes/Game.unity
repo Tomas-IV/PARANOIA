@@ -1334,9 +1334,6 @@ MonoBehaviour:
   puertaObjetivo: {fileID: 1877974969}
   idBotonUnico: 1
   tamanoSensor: {x: 0.39, y: 0.3}
-  capasJugador:
-    serializedVersion: 2
-    m_Bits: 2147483647
 --- !u!1 &822837846
 GameObject:
   m_ObjectHideFlags: 0
@@ -2144,9 +2141,6 @@ MonoBehaviour:
   puertaObjetivo: {fileID: 1877974969}
   idBotonUnico: 2
   tamanoSensor: {x: 0.39, y: 0.3}
-  capasJugador:
-    serializedVersion: 2
-    m_Bits: 2147483647
 --- !u!1 &1082877246
 GameObject:
   m_ObjectHideFlags: 0
@@ -2960,9 +2954,7 @@ GameObject:
   - component: {fileID: 1487620608}
   - component: {fileID: 1487620607}
   - component: {fileID: 1487620612}
-  - component: {fileID: 1487620613}
   - component: {fileID: 1487620611}
-  - component: {fileID: 1487620610}
   - component: {fileID: 1487620609}
   m_Layer: 0
   m_Name: Door (1)
@@ -3054,29 +3046,6 @@ MonoBehaviour:
   m_SynchronizeAngularVelocity: 0
   m_TeleportEnabled: 0
   m_TeleportIfDistanceGreaterThan: 3
---- !u!114 &1487620610
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1487620606}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: aa584fbee541324448dd18d8409c7a41, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  ObservedComponentsFoldoutOpen: 1
-  Group: 0
-  prefixField: -1
-  Synchronization: 3
-  OwnershipTransfer: 0
-  observableSearch: 2
-  ObservedComponents:
-  - {fileID: 1487620609}
-  sceneViewId: 6
-  InstantiationId: 0
-  isRuntimeInstantiated: 0
 --- !u!61 &1487620611
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -3124,19 +3093,6 @@ Rigidbody2D:
   m_SleepingMode: 1
   m_CollisionDetection: 0
   m_Constraints: 0
---- !u!114 &1487620613
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1487620606}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7af40bf4bbb4e3e41b72f18d36822cc7, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  otraPuerta: {fileID: 0}
 --- !u!1 &1556189588
 GameObject:
   m_ObjectHideFlags: 0
@@ -3505,8 +3461,8 @@ GameObject:
   - component: {fileID: 1877974968}
   - component: {fileID: 1877974969}
   - component: {fileID: 1877974967}
-  - component: {fileID: 1877974966}
   - component: {fileID: 1877974965}
+  - component: {fileID: 1877974970}
   m_Layer: 0
   m_Name: Door
   m_TagString: Untagged
@@ -3597,29 +3553,6 @@ MonoBehaviour:
   m_SynchronizeAngularVelocity: 0
   m_TeleportEnabled: 0
   m_TeleportIfDistanceGreaterThan: 3
---- !u!114 &1877974966
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1877974962}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: aa584fbee541324448dd18d8409c7a41, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  ObservedComponentsFoldoutOpen: 1
-  Group: 0
-  prefixField: -1
-  Synchronization: 3
-  OwnershipTransfer: 0
-  observableSearch: 2
-  ObservedComponents:
-  - {fileID: 1877974965}
-  sceneViewId: 5
-  InstantiationId: 0
-  isRuntimeInstantiated: 0
 --- !u!61 &1877974967
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -3680,6 +3613,30 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   otraPuerta: {fileID: 1487620606}
+  toleranciaSegundos: 0.5
+--- !u!114 &1877974970
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1877974962}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aa584fbee541324448dd18d8409c7a41, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ObservedComponentsFoldoutOpen: 1
+  Group: 0
+  prefixField: -1
+  Synchronization: 3
+  OwnershipTransfer: 0
+  observableSearch: 2
+  ObservedComponents:
+  - {fileID: 1877974965}
+  sceneViewId: 5
+  InstantiationId: 0
+  isRuntimeInstantiated: 0
 --- !u!1 &1960977356
 GameObject:
   m_ObjectHideFlags: 0
