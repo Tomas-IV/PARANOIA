@@ -8,12 +8,8 @@ public class DoorController : MonoBehaviourPun, IOnEventCallback
 {
     private const byte DESVANECER_PUERTA_EVENT_CODE = 42;
 
-    // Guardamos los IDs de los botones activados en lugar de los jugadores
+    // Guardamos los IDs de los botones activados de manera permanente
     private HashSet<int> botonesActivados = new HashSet<int>();
-
-    private float tiempoPrimerClick;
-    private float ventanaTiempo = 2f;
-    private bool comenzandoCuenta = false;
     private bool yaSeDesvanecio = false;
 
     private void OnEnable()
@@ -26,22 +22,8 @@ public class DoorController : MonoBehaviourPun, IOnEventCallback
         PhotonNetwork.RemoveCallbackTarget(this);
     }
 
-    private void Update()
-    {
-        if (!PhotonNetwork.IsMasterClient) return;
-        if (yaSeDesvanecio) return;
-
-        if (comenzandoCuenta && Time.time > tiempoPrimerClick + ventanaTiempo)
-        {
-            Debug.Log("Tiempo agotado. No lograron presionar ambos botones en menos de 2 segundos.");
-            botonesActivados.Clear();
-            comenzandoCuenta = false;
-        }
-    }
-
     public void EnviarConfirmacionInput(int idBoton)
     {
-        // Pasamos el id del boton por el RPC
         photonView.RPC(nameof(RPC_RegistrarQBoton), RpcTarget.MasterClient, idBoton);
     }
 
@@ -51,25 +33,18 @@ public class DoorController : MonoBehaviourPun, IOnEventCallback
         if (!PhotonNetwork.IsMasterClient) return;
         if (yaSeDesvanecio) return;
 
-        // Si es el primer boton que tocan, arranca el contador de 2 segundos
-        if (botonesActivados.Count == 0)
-        {
-            tiempoPrimerClick = Time.time;
-            comenzandoCuenta = true;
-            Debug.Log("Primer boton presionado. Tienen 2 segundos para activar el otro...");
-        }
-
+        // Registramos el boton si no estaba en la lista
         if (!botonesActivados.Contains(idBoton))
         {
             botonesActivados.Add(idBoton);
-            Debug.Log("Boton " + idBoton + " registrado. Botones listos: " + botonesActivados.Count + "/2");
+            Debug.Log("Boton " + idBoton + " registrado de manera permanente. Botones listos: " + botonesActivados.Count + "/2");
         }
 
-        // Si ya se presionaron 2 botones diferentes dentro del tiempo límite
+        // En cuanto se hayan presionado los 2 botones unicos (el 1 y el 2)
         if (botonesActivados.Count >= 2)
         {
             yaSeDesvanecio = true;
-            Debug.Log("¡Coordinacion exitosa de a dos! Desvaneciendo puerta...");
+            Debug.Log("¡Ambos botones fueron activados! Desvaneciendo puerta mediante RaiseEvent...");
             MandarRaiseEventDesvanecer();
         }
     }
