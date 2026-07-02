@@ -17,6 +17,9 @@ public class PlayerUI : MonoBehaviourPun
     [Header("Down")]
     [SerializeField] private TMP_Text downText;
 
+    [Header("Revive")]
+    [SerializeField] private Slider reviveSlider;
+
     [Header("Colors")]
     [SerializeField] private Color healthyColor = Color.green;
     [SerializeField] private Color warningColor = new Color(1f, 0.6f, 0f);
@@ -34,6 +37,14 @@ public class PlayerUI : MonoBehaviourPun
     {
         nicknameText.text = photonView.Owner.NickName;
         downText.gameObject.SetActive(false);
+        
+        if (reviveSlider != null)
+        {
+            reviveSlider.gameObject.SetActive(false);
+            reviveSlider.minValue = 0f;
+            reviveSlider.maxValue = 1f;
+            reviveSlider.value = 0f;
+        }
     }
 
     public void SetHealth(int currentHealth, int maxHealth)
@@ -67,5 +78,31 @@ public class PlayerUI : MonoBehaviourPun
             healthSlider.value = 0;
             fillImage.color = dangerColor;
         }
+    }
+
+    public void ShowReviveProgress()
+    {
+        if (reviveSlider == null)
+            return;
+
+        reviveSlider.gameObject.SetActive(true);
+        reviveSlider.value = 0f;
+    }
+
+    public void HideReviveProgress()
+    {
+        if (reviveSlider == null)
+            return;
+
+        reviveSlider.value = 0f;
+        reviveSlider.gameObject.SetActive(false);
+    }
+
+    public void SetReviveProgress(float progress)
+    {
+        if (reviveSlider == null)
+            return;
+
+        reviveSlider.value = Mathf.Clamp01(progress);
     }
 }
