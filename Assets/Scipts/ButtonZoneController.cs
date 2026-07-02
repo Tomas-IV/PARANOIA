@@ -1,82 +1,73 @@
 using UnityEngine;
 using Photon.Pun;
 
-// Nota: ya no hereda de MonoBehaviourPun porque este script no envia RPCs propios,
-// solo le avisa localmente a la puerta. Evita el warning de "PhotonView no encontrado".
 public class ButtonZoneController : MonoBehaviour
 {
-    [Header("Referencias")]
-    [Tooltip("IMPORTANTE: los dos botones (Button y Button (1)) deben apuntar al MISMO DoorController.")]
+    [Header("Conexión Principal")]
     [SerializeField] private DoorController puertaObjetivo;
+    [SerializeField] private int idBotonUnico;
 
-    [Header("Configuracion de Equipo")]
-    [SerializeField, Tooltip("Asignar 1 o 2: cada boton debe tener un id distinto (1 y 2).")]
-    private int idBotonUnico = 1;
+    [Header("Ajuste de Margen")]
+    [SerializeField] private float radioDeteccion = 0.5f; // Qué tan cerca hay que estar del centro del botón
 
-    [Header("Configuracion del Sensor")]
-    [SerializeField] private Vector2 tamanoSensor = new Vector2(0.39f, 0.30f);
-
-    private bool qEstaPresionada = false;
-
-    private void Awake()
-    {
-        if (puertaObjetivo == null)
-        {
-            Debug.LogWarning($"{name}: 'puertaObjetivo' no asignada. Asigna la misma instancia de DoorController en ambos botones.");
-        }
-    }
-
-    private void OnValidate()
-    {
-        // Forzar id valido (1 o 2) en el inspector
-        if (idBotonUnico < 1) idBotonUnico = 1;
-        if (idBotonUnico > 2) idBotonUnico = 2;
-    }
+    private GameObject jugadorLocal = null;
+    private bool estoyPresionandoQ = false;
 
     private void Update()
     {
-        Collider2D[] colisiones = Physics2D.OverlapBoxAll(transform.position, tamanoSensor, 0f);
-        bool miJugadorEstaAca = false;
-
-        foreach (Collider2D col in colisiones)
+        // Si aún no encontramos nuestro personaje local en esta PC, lo buscamos
+        if (jugadorLocal == null)
         {
-            if (col.CompareTag("Player") || col.gameObject.name.Contains("PlayerSho") || col.gameObject.name.Contains("PlayerSpe"))
-            {
-                PhotonView pv = col.GetComponent<PhotonView>();
-                if (pv == null)
-                {
-                    pv = col.GetComponentInParent<PhotonView>();
-                }
+            BuscarMiJugadorLocal();
+        }
 
-                if (pv != null && pv.IsMine)
-                {
-                    miJugadorEstaAca = true;
-                    break;
-                }
+        bool cercaDelBoton = false;
+
+        if (jugadorLocal != null)
+        {
+            // MODO NUEVO: Cálculo matemático de distancia pura. Saltea bugs de colisiones.
+            float distancia = Vector2.Distance(transform.position, jugadorLocal.transform.position);
+            if (distancia <= radioDeteccion)
+            {
+                cercaDelBoton = true;
             }
         }
 
-        if (miJugadorEstaAca && Input.GetKey(KeyCode.Q))
+        // Condición de interacción activa
+        bool presionandoAhora = cercaDelBoton && Input.GetKey(KeyCode.Q);
+
+        // Enviamos el paquete por red SOLO si cambió de estado (evita saturar Photon)
+        if (presionandoAhora != estoyPresionandoQ)
         {
-            if (!qEstaPresionada)
+            estoyPresionandoQ = presionandoAhora;
+
+            if (puertaObjetivo != null)
             {
-                qEstaPresionada = true;
-                if (puertaObjetivo != null) puertaObjetivo.ActualizarEstadoBoton(idBotonUnico, true);
+                puertaObjetivo.NotificarEstadoBoton(idBotonUnico, estoyPresionandoQ);
             }
         }
-        else
+    }
+
+    private void BuscarMiJugadorLocal()
+    {
+        // Escaneamos la escena buscando el objeto que te pertenece a VOS en esta pantalla
+        PhotonView[] todosLosViews = FindObjectsOfType<PhotonView>();
+        foreach (PhotonView view in todosLosViews)
         {
-            if (qEstaPresionada)
+            if (view.IsMine && (view.CompareTag("Player") ||
+                                view.gameObject.name.Contains("PlayerSho") ||
+                                view.gameObject.name.Contains("PlayerSpe")))
             {
-                qEstaPresionada = false;
-                if (puertaObjetivo != null) puertaObjetivo.ActualizarEstadoBoton(idBotonUnico, false);
+                jugadorLocal = view.gameObject;
+                return;
             }
         }
     }
 
     private void OnDrawGizmos()
     {
-        Gizmos.color = Color.green;
-        Gizmos.DrawWireCube(transform.position, tamanoSensor);
+        // Dibuja una esfera celeste en la pestaña Scene para ver el rango real del botón
+        Gizmos.color = Color.cyan;
+        Gizmos.DrawWireSphere(transform.position, radioDeteccion);
     }
 }

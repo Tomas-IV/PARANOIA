@@ -3,72 +3,45 @@ using Photon.Pun;
 
 public class DoorController : MonoBehaviourPun
 {
-    [Header("Segunda Puerta Opcional")]
-    [Tooltip("Se desactiva junto con esta puerta (no necesita PhotonView propio).")]
+    [Header("Asignación de Puerta Gemela")]
     [SerializeField] private GameObject otraPuerta;
-
-    [Header("Precision de sincronizacion")]
-    [Tooltip("Maxima diferencia de tiempo (en segundos) entre ambas presiones para considerarlas simultaneas.")]
-    [SerializeField] private double toleranciaSegundos = 0.5;
 
     private bool boton1Activo = false;
     private bool boton2Activo = false;
-    private double boton1Timestamp = double.NegativeInfinity;
-    private double boton2Timestamp = double.NegativeInfinity;
-    private bool yaSeDesvanecio = false;
+    private bool seDesvanecieron = false;
 
-    public void ActualizarEstadoBoton(int idBoton, bool estaApretado)
+    public void NotificarEstadoBoton(int idBoton, bool estaPresionado)
     {
-        if (yaSeDesvanecio) return;
-
-        // PhotonNetwork.Time es un reloj sincronizado entre TODOS los clientes,
-        // por eso lo usamos como marca de tiempo precisa en vez de Time.time (que es local a cada PC).
-        double tiempoRed = PhotonNetwork.Time;
-        photonView.RPC(nameof(RPC_SincronizarBoton), RpcTarget.All, idBoton, estaApretado, tiempoRed);
+        // Sincronizamos la entrada en el búfer global para que impacte al mismo tiempo
+        photonView.RPC(nameof(RPC_SincronizarEntradaBoton), RpcTarget.AllBuffered, idBoton, estaPresionado);
     }
 
     [PunRPC]
-    private void RPC_SincronizarBoton(int idBoton, bool estaApretado, double timestamp)
+    private void RPC_SincronizarEntradaBoton(int idBoton, bool estaPresionado)
     {
-        if (yaSeDesvanecio) return;
+        if (seDesvanecieron) return;
 
-        if (idBoton == 1)
-        {
-            boton1Activo = estaApretado;
-            boton1Timestamp = estaApretado ? timestamp : double.NegativeInfinity;
-        }
-        else if (idBoton == 2)
-        {
-            boton2Activo = estaApretado;
-            boton2Timestamp = estaApretado ? timestamp : double.NegativeInfinity;
-        }
+        // Guardamos los estados de las llaves en tiempo real
+        if (idBoton == 1) boton1Activo = estaPresionado;
+        if (idBoton == 2) boton2Activo = estaPresionado;
 
-        VerificarSincronizacion();
+        // CONDICIÓN DE SINCRONIZACIÓN EXACTA: Las dos tienen que estar apretadas en este frame
+        if (boton1Activo && boton2Activo)
+        {
+            seDesvanecieron = true;
+            DesvanecerEstructuras();
+        }
     }
 
-    private void VerificarSincronizacion()
+    private void DesvanecerEstructuras()
     {
-        // Los dos tienen que estar apretados AHORA
-        if (!boton1Activo || !boton2Activo) return;
-
-        // Y ademas la diferencia entre el instante en que cada uno empezo a apretar
-        // tiene que estar dentro de la tolerancia -> esto es lo que hace la sincronizacion "precisa"
-        double diferencia = System.Math.Abs(boton1Timestamp - boton2Timestamp);
-
-        if (diferencia <= toleranciaSegundos)
+        // Hacemos desaparecer Door (1) mediante la referencia
+        if (otraPuerta != null)
         {
-            yaSeDesvanecio = true;
-            Debug.Log($"AMBOS BOTONES SINCRONIZADOS (diferencia: {diferencia:F2}s). Desvaneciendo...");
+            otraPuerta.SetActive(false);
+        }
 
-            if (otraPuerta != null)
-            {
-                otraPuerta.SetActive(false);
-            }
-            gameObject.SetActive(false);
-        }
-        else
-        {
-            Debug.Log($"Botones presionados pero NO sincronizados (diferencia: {diferencia:F2}s > {toleranciaSegundos}s). No cuenta.");
-        }
+        // Hacemos desaparecer esta puerta (Door)
+        gameObject.SetActive(false);
     }
 }
