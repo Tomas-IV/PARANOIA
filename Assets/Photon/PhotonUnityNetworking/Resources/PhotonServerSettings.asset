@@ -74,6 +74,8 @@ MonoBehaviour:
   - RPC_AbrirPuertas
   - RecibirDanioRed
   - RPC_OtorgarBaja
+  - RPC_DestroyPickup
+  - RPC_RequestThrowGrenade
   DisableAutoOpenWizard: 1
   ShowSettings: 0
   DevRegionSetOnce: 1

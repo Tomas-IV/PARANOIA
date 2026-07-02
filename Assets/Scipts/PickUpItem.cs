@@ -8,11 +8,24 @@ using UnityEngine;
 
 public class PickUpItem : MonoBehaviour
 {
-    [SerializeField] private GameObject itemPrefab;
+    [System.Serializable]
+    public class PickupEntry
+    {
+        public string id;
+        public GameObject prefab;
+    }
+
+    [Header("Pickups")]
+    [SerializeField] private PickupEntry[] pickups;
+
+    [Header("Spawn Points")]
     [SerializeField] private Transform[] spawnPoints;
 
     private bool spawnEnabled = true;
     private int amountToSpawn = 1;
+    private string enabledPickups = "";
+
+    private readonly List<GameObject> availablePickups = new();
 
     private async void Start()
     {
@@ -23,9 +36,11 @@ public class PickUpItem : MonoBehaviour
 
         if (!spawnEnabled)
         {
-            Debug.Log("Pickup spawn deshabilitado desde Remote Config.");
+            Debug.Log("Pickup spawn disabled.");
             return;
         }
+
+        BuildPickupList();
 
         SpawnItems();
     }
@@ -41,34 +56,68 @@ public class PickUpItem : MonoBehaviour
             new UserAttributes(),
             new AppAttributes());
 
-        spawnEnabled = RemoteConfigService.Instance.appConfig.GetBool("pickup_spawn_enabled",true);
+        spawnEnabled = RemoteConfigService.Instance.appConfig.GetBool(
+            "pickup_spawn_enabled",
+            true);
 
-        amountToSpawn = RemoteConfigService.Instance.appConfig.GetInt("pickup_spawn_amount",1);
+        amountToSpawn = RemoteConfigService.Instance.appConfig.GetInt(
+            "pickup_spawn_amount",
+            1);
 
-        Debug.Log("Remote Config Loaded:");
-        Debug.Log("spawnEnabled: " + spawnEnabled);
-        Debug.Log("amountToSpawn: " + amountToSpawn);
+        enabledPickups = RemoteConfigService.Instance.appConfig.GetString(
+            "enabled_pickups",
+            "heal");
+
+        Debug.Log("Remote Config Loaded");
+        Debug.Log("Spawn Enabled: " + spawnEnabled);
+        Debug.Log("Spawn Amount: " + amountToSpawn);
+        Debug.Log("Enabled Pickups: " + enabledPickups);
+    }
+
+    private void BuildPickupList()
+    {
+        availablePickups.Clear();
+
+        string[] ids = enabledPickups.Split(',');
+
+        foreach (string id in ids)
+        {
+            string trimmed = id.Trim().ToLower();
+
+            foreach (PickupEntry entry in pickups)
+            {
+                if (entry.id.ToLower() == trimmed)
+                {
+                    availablePickups.Add(entry.prefab);
+                }
+            }
+        }
     }
 
     private void SpawnItems()
     {
-        if (spawnPoints.Length == 0)
+        if (availablePickups.Count == 0)
         {
-            Debug.LogWarning("No hay SpawnPoints configurados.");
+            Debug.LogWarning("No enabled pickups found.");
             return;
         }
 
-        List<Transform> availablePoints = new List<Transform>(spawnPoints);
+        List<Transform> freePoints = new(spawnPoints);
 
-        int spawnCount = Mathf.Min(amountToSpawn, availablePoints.Count);
+        int spawnCount = Mathf.Min(amountToSpawn, freePoints.Count);
 
         for (int i = 0; i < spawnCount; i++)
         {
-            int randomIndex = Random.Range(0, availablePoints.Count);
+            int pointIndex = Random.Range(0, freePoints.Count);
 
-            PhotonNetwork.InstantiateRoomObject(itemPrefab.name,availablePoints[randomIndex].position,Quaternion.identity);
+            int pickupIndex = Random.Range(0, availablePickups.Count);
 
-            availablePoints.RemoveAt(randomIndex);
+            PhotonNetwork.InstantiateRoomObject(
+                availablePickups[pickupIndex].name,
+                freePoints[pointIndex].position,
+                Quaternion.identity);
+
+            freePoints.RemoveAt(pointIndex);
         }
     }
 

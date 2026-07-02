@@ -772,6 +772,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   velocidad: 3.5
   distanciaDeteccion: 30
+  danioPorGolpe: 10
+  tiempoEntreAtaques: 1.5
+  vidaMax: 105
 --- !u!1 &1501962053
 GameObject:
   m_ObjectHideFlags: 0
