@@ -4,18 +4,23 @@ using Photon.Pun;
 
 public class ContadorBajasUI : MonoBehaviour
 {
-    // Esto crea un acceso directo global para que los zombis lo encuentren siempre
     public static ContadorBajasUI Instancia;
 
     private GameObject scoreCanvas;
     private Text textoScore;
 
-    private int zombisMuertos = 0;
+    // --- SISTEMA DE ENCRIPTACIÓN XOR (Basado en el PPT) ---
+    // Nuestra clave secreta. ¡Nadie fuera del equipo de desarrollo debe saberla!
+    private int claveSecreta = 8352;
+
+    // Aquí guardamos el valor cifrado en memoria, NUNCA el valor real
+    private int zombisMuertosCifrado;
+    // ------------------------------------------------------
+
     private bool estaVisible = false;
 
     private void Awake()
     {
-        // Configuramos el acceso directo al iniciar
         if (Instancia == null)
         {
             Instancia = this;
@@ -28,16 +33,17 @@ public class ContadorBajasUI : MonoBehaviour
 
     private void Start()
     {
+        // Inicializamos el contador en 0, pero ENCRIPTADO (0 ^ clave)
+        zombisMuertosCifrado = 0 ^ claveSecreta;
+
         CrearInterfazTopRight();
         ActualizarMarcador();
 
-        // Al arrancar la partida, el panel arranca OCULTO
         scoreCanvas.SetActive(false);
     }
 
     private void Update()
     {
-        // Si tocás la H, se invierte el estado (si estaba oculto aparece, si estaba visible se va)
         if (Input.GetKeyDown(KeyCode.H))
         {
             estaVisible = !estaVisible;
@@ -45,10 +51,18 @@ public class ContadorBajasUI : MonoBehaviour
         }
     }
 
-    // Esta función suma y se puede llamar desde cualquier lado
+    // Esta función suma una baja de forma segura
     public void RegistrarBaja()
     {
-        zombisMuertos++;
+        // 1. DESENCRIPTAR: Aplicamos el operador XOR (^) para obtener el valor real temporalmente
+        int valorReal = zombisMuertosCifrado ^ claveSecreta;
+
+        // 2. SUMAR: Agregamos la nueva kill
+        valorReal++;
+
+        // 3. ENCRIPTAR: Volvemos a aplicar XOR y lo guardamos cifrado en memoria
+        zombisMuertosCifrado = valorReal ^ claveSecreta;
+
         ActualizarMarcador();
     }
 
@@ -56,11 +70,14 @@ public class ContadorBajasUI : MonoBehaviour
     {
         if (textoScore != null)
         {
+            // Para mostrarlo en pantalla, necesitamos desencriptarlo primero
+            int valorRealParaMostrar = zombisMuertosCifrado ^ claveSecreta;
+
             string miNombre = PhotonNetwork.LocalPlayer.NickName;
             if (string.IsNullOrEmpty(miNombre)) miNombre = "Jugador";
 
-            // \n sirve para hacer un "Enter" y que quede en dos líneas prolijas
-            textoScore.text = $"{miNombre}\nBajas: {zombisMuertos}";
+            // Mostramos el valor real, pero en la memoria RAM sigue estando el valor cifrado
+            textoScore.text = $"{miNombre}\nBajas: {valorRealParaMostrar}";
         }
     }
 
@@ -70,7 +87,7 @@ public class ContadorBajasUI : MonoBehaviour
         GameObject canvasObj = new GameObject("ScoreCanvas_Auto");
         Canvas canvas = canvasObj.AddComponent<Canvas>();
         canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-        canvas.sortingOrder = 100; // Lo ponemos bien al frente
+        canvas.sortingOrder = 100;
         canvasObj.AddComponent<CanvasScaler>();
         canvasObj.AddComponent<GraphicRaycaster>();
         scoreCanvas = canvasObj;
@@ -81,11 +98,10 @@ public class ContadorBajasUI : MonoBehaviour
         imagenFondo.color = new Color(0, 0, 0, 0.85f);
 
         RectTransform rtFondo = fondoObj.GetComponent<RectTransform>();
-        rtFondo.anchorMin = new Vector2(1f, 1f); // 1, 1 es Arriba a la Derecha
+        rtFondo.anchorMin = new Vector2(1f, 1f);
         rtFondo.anchorMax = new Vector2(1f, 1f);
         rtFondo.pivot = new Vector2(1f, 1f);
 
-        // Lo hacemos un poco más alto para que entren las dos líneas de texto
         rtFondo.sizeDelta = new Vector2(200, 70);
         rtFondo.anchoredPosition = new Vector2(-20, -20);
 
