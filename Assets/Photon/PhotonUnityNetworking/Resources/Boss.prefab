@@ -106,7 +106,7 @@ MonoBehaviour:
   distanciaDeteccion: 900
   danioPorGolpe: 40
   tiempoEntreAtaques: 1.5
-  vidaMax: 525
+  vidaMax: 5000
 --- !u!50 &7675088417173080410
 Rigidbody2D:
   serializedVersion: 4
