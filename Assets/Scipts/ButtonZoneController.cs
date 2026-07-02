@@ -20,8 +20,7 @@ public class ButtonZoneController : MonoBehaviour
 
         foreach (Collider2D col in colisiones)
         {
-            if (!col.CompareTag("Player") &&
-                !col.gameObject.name.Contains("Player"))
+            if (!col.CompareTag("Player"))
             {
                 continue;
             }
