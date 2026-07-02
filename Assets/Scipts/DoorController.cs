@@ -31,11 +31,11 @@ public class DoorController : MonoBehaviourPun
     // Metodo publico que llama el boton localmente
     public void EnviarConfirmacionInput()
     {
-        photonView.RPC(nameof(RPC_RegistrarEnterJugador), RpcTarget.MasterClient, PhotonNetwork.LocalPlayer.ActorNumber);
+        photonView.RPC(nameof(RPC_RegistrarQJugador), RpcTarget.MasterClient, PhotonNetwork.LocalPlayer.ActorNumber);
     }
 
     [PunRPC]
-    private void RPC_RegistrarEnterJugador(int actorNumber)
+    private void RPC_RegistrarQJugador(int actorNumber)
     {
         if (!PhotonNetwork.IsMasterClient) return;
         if (debeAbrirse) return;
@@ -43,7 +43,7 @@ public class DoorController : MonoBehaviourPun
         if (!jugadoresListos.Contains(actorNumber))
         {
             jugadoresListos.Add(actorNumber);
-            Debug.Log("Jugador " + actorNumber + " presiono ENTER en el boton. Listos: " + jugadoresListos.Count + "/" + PhotonNetwork.CurrentRoom.PlayerCount);
+            Debug.Log("Jugador " + actorNumber + " presiono Q en el boton. Listos: " + jugadoresListos.Count + "/" + PhotonNetwork.CurrentRoom.PlayerCount);
         }
 
         if (jugadoresListos.Count >= PhotonNetwork.CurrentRoom.PlayerCount && PhotonNetwork.CurrentRoom.PlayerCount > 0)
