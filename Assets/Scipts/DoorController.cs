@@ -1,67 +1,37 @@
 using System.Collections.Generic;
 using UnityEngine;
 using Photon.Pun;
-using ExitGames.Client.Photon;
-using Photon.Realtime;
 
-public class DoorController : MonoBehaviourPun, IOnEventCallback
+public class DoorController : MonoBehaviourPun
 {
-    private const byte DESVANECER_PUERTA_EVENT_CODE = 42;
-
-    // Guardamos los IDs de los botones activados de manera permanente
     private HashSet<int> botonesActivados = new HashSet<int>();
     private bool yaSeDesvanecio = false;
 
-    private void OnEnable()
-    {
-        PhotonNetwork.AddCallbackTarget(this);
-    }
-
-    private void OnDisable()
-    {
-        PhotonNetwork.RemoveCallbackTarget(this);
-    }
-
     public void EnviarConfirmacionInput(int idBoton)
     {
-        photonView.RPC(nameof(RPC_RegistrarQBoton), RpcTarget.MasterClient, idBoton);
+        // Enviamos la informacion del boton a TODOS los clientes de la sala
+        photonView.RPC(nameof(RPC_RegistrarQBoton), RpcTarget.All, idBoton);
     }
 
     [PunRPC]
     private void RPC_RegistrarQBoton(int idBoton)
     {
-        if (!PhotonNetwork.IsMasterClient) return;
         if (yaSeDesvanecio) return;
 
-        // Registramos el boton si no estaba en la lista
+        // Registramos el boton en las listas de todas las computadoras en simultaneo
         if (!botonesActivados.Contains(idBoton))
         {
             botonesActivados.Add(idBoton);
-            Debug.Log("Boton " + idBoton + " registrado de manera permanente. Botones listos: " + botonesActivados.Count + "/2");
+            Debug.Log("Boton " + idBoton + " registrado. Total botones activos: " + botonesActivados.Count + "/2");
         }
 
-        // En cuanto se hayan presionado los 2 botones unicos (el 1 y el 2)
+        // Si en la lista local de CADA PC ya figuran ambos botones (el 1 y el 2)
         if (botonesActivados.Count >= 2)
         {
             yaSeDesvanecio = true;
-            Debug.Log("¡Ambos botones fueron activados! Desvaneciendo puerta mediante RaiseEvent...");
-            MandarRaiseEventDesvanecer();
-        }
-    }
+            Debug.Log("¡Ambos botones presionados! Desvaneciendo puertas...");
 
-    private void MandarRaiseEventDesvanecer()
-    {
-        object[] content = null;
-        RaiseEventOptions raiseEventOptions = new RaiseEventOptions { Receivers = ReceiverGroup.All };
-        SendOptions sendOptions = new SendOptions { Reliability = true };
-
-        PhotonNetwork.RaiseEvent(DESVANECER_PUERTA_EVENT_CODE, content, raiseEventOptions, sendOptions);
-    }
-
-    public void OnEvent(EventData photonEvent)
-    {
-        if (photonEvent.Code == DESVANECER_PUERTA_EVENT_CODE)
-        {
+            // Apagamos el objeto de la puerta de manera local y simultanea
             gameObject.SetActive(false);
         }
     }
