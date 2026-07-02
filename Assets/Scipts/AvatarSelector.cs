@@ -6,12 +6,16 @@ public class AvatarSelector : MonoBehaviour
 {
     public void SelectSpecialist()
     {
+        PlayerPrefs.SetInt("Avatar", (int)PlayerAvatar.Specialist);
+        PlayerPrefs.Save();
         PlayerInfo.SetAvatar(PlayerAvatar.Specialist);
         Debug.Log("Avatar seleccionado: Especialista");
     }
     
     public void SelectShooter()
     {
+        PlayerPrefs.SetInt("Avatar", (int)PlayerAvatar.Shooter);
+        PlayerPrefs.Save();
         PlayerInfo.SetAvatar(PlayerAvatar.Shooter);
         Debug.Log("Avatar seleccionado: Tirador");
     }
