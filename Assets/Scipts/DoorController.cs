@@ -10,12 +10,16 @@ public class DoorController : MonoBehaviourPun
     [Header("Botones")]
     [SerializeField] private int cantidadBotones = 2;
 
+    [Header("Configuración del Boss")]
+    [Tooltip("El nombre exacto del prefab de tu Boss que pusiste en la carpeta Resources")]
+    [SerializeField] private string nombrePrefabBoss = "Boss";
+    [SerializeField] private Transform puntoSpawnBoss;
+
     private Dictionary<int, bool> estadosBotones = new Dictionary<int, bool>();
     private bool abrirPuertas = false;
 
     private void Start()
     {
-        // Inicializamos los botones en el diccionario
         for (int i = 0; i < cantidadBotones; i++)
         {
             estadosBotones.Add(i, false);
@@ -30,7 +34,6 @@ public class DoorController : MonoBehaviourPun
     [PunRPC]
     private void RPC_RecibirVoto(int idBoton, bool estado)
     {
-        // Solo el MasterClient procesa esta lógica
         if (!PhotonNetwork.IsMasterClient)
             return;
 
@@ -39,21 +42,17 @@ public class DoorController : MonoBehaviourPun
 
         if (!estadosBotones.ContainsKey(idBoton))
         {
-            Debug.LogError($"¡ERROR! Se recibió señal del botón {idBoton}, pero ese ID no existe. Revisá los IDs en el Inspector de los botones.");
             return;
         }
 
         estadosBotones[idBoton] = estado;
-        Debug.Log($"MasterClient: El Botón {idBoton} está presionado: {estado}");
 
-        // Verificamos si todos los botones están activos
         foreach (bool activo in estadosBotones.Values)
         {
             if (!activo)
-                return; // Si alguno es falso, cortamos acá y esperamos
+                return;
         }
 
-        Debug.Log("¡Los dos botones están presionados! Desapareciendo puertas...");
         photonView.RPC(nameof(RPC_AbrirPuertas), RpcTarget.AllBuffered);
     }
 
@@ -62,13 +61,19 @@ public class DoorController : MonoBehaviourPun
     {
         abrirPuertas = true;
 
-        // Apagamos la puerta principal
+        // 1. Apagamos las puertas
         gameObject.SetActive(false);
 
-        // Si tenés una puerta asignada abajo, la apagamos también
         if (puertaAbajo != null)
         {
             puertaAbajo.SetActive(false);
+        }
+
+        // 2. Instanciamos al Boss (Solo el MasterClient lo hace para evitar que aparezcan 2 clones)
+        if (PhotonNetwork.IsMasterClient && puntoSpawnBoss != null)
+        {
+            // PhotonNetwork.Instantiate busca el nombre del prefab dentro de la carpeta Resources
+            PhotonNetwork.Instantiate(nombrePrefabBoss, puntoSpawnBoss.position, puntoSpawnBoss.rotation);
         }
     }
 }
