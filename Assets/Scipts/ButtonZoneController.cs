@@ -6,6 +6,9 @@ public class ButtonZoneController : MonoBehaviourPun
     [Header("Referencias")]
     [SerializeField] private DoorController puertaObjetivo;
 
+    [Header("Configuracion de Equipo")]
+    [SerializeField] private int idBotonUnico; // Todo junto para evitar el error de sintaxis
+
     private bool jugadorEnZona = false;
 
     private void Update()
@@ -16,7 +19,7 @@ public class ButtonZoneController : MonoBehaviourPun
             {
                 if (puertaObjetivo != null)
                 {
-                    puertaObjetivo.EnviarConfirmacionInput();
+                    puertaObjetivo.EnviarConfirmacionInput(idBotonUnico);
                 }
             }
         }
@@ -33,7 +36,7 @@ public class ButtonZoneController : MonoBehaviourPun
                 if (pv.IsMine)
                 {
                     jugadorEnZona = true;
-                    Debug.Log("Entraste al boton. Presiona Q para activar.");
+                    Debug.Log("Entraste al boton " + idBotonUnico + ". Presiona Q para activar.");
                 }
             }
         }
@@ -50,7 +53,7 @@ public class ButtonZoneController : MonoBehaviourPun
                 if (pv.IsMine)
                 {
                     jugadorEnZona = false;
-                    Debug.Log("Saliste del boton.");
+                    Debug.Log("Saliste del boton " + idBotonUnico + ".");
                 }
             }
         }

@@ -6,10 +6,11 @@ using Photon.Realtime;
 
 public class DoorController : MonoBehaviourPun, IOnEventCallback
 {
-    // Definimos un codigo unico para nuestro evento de desvanecer la puerta (entre 1 y 199)
     private const byte DESVANECER_PUERTA_EVENT_CODE = 42;
 
-    private HashSet<int> jugadoresListos = new HashSet<int>();
+    // Guardamos los IDs de los botones activados en lugar de los jugadores
+    private HashSet<int> botonesActivados = new HashSet<int>();
+
     private float tiempoPrimerClick;
     private float ventanaTiempo = 2f;
     private bool comenzandoCuenta = false;
@@ -17,13 +18,11 @@ public class DoorController : MonoBehaviourPun, IOnEventCallback
 
     private void OnEnable()
     {
-        // Nos registramos para escuchar eventos de Photon
         PhotonNetwork.AddCallbackTarget(this);
     }
 
     private void OnDisable()
     {
-        // Nos desregistramos al apagarse el objeto para evitar fugas de memoria
         PhotonNetwork.RemoveCallbackTarget(this);
     }
 
@@ -34,67 +33,60 @@ public class DoorController : MonoBehaviourPun, IOnEventCallback
 
         if (comenzandoCuenta && Time.time > tiempoPrimerClick + ventanaTiempo)
         {
-            Debug.Log("Tiempo agotado (pasaron 2 segundos). Coordinen de nuevo.");
-            jugadoresListos.Clear();
+            Debug.Log("Tiempo agotado. No lograron presionar ambos botones en menos de 2 segundos.");
+            botonesActivados.Clear();
             comenzandoCuenta = false;
         }
     }
 
-    public void EnviarConfirmacionInput()
+    public void EnviarConfirmacionInput(int idBoton)
     {
-        photonView.RPC(nameof(RPC_RegistrarQJugador), RpcTarget.MasterClient, PhotonNetwork.LocalPlayer.ActorNumber);
+        // Pasamos el id del boton por el RPC
+        photonView.RPC(nameof(RPC_RegistrarQBoton), RpcTarget.MasterClient, idBoton);
     }
 
     [PunRPC]
-    private void RPC_RegistrarQJugador(int actorNumber)
+    private void RPC_RegistrarQBoton(int idBoton)
     {
         if (!PhotonNetwork.IsMasterClient) return;
         if (yaSeDesvanecio) return;
 
-        if (jugadoresListos.Count == 0)
+        // Si es el primer boton que tocan, arranca el contador de 2 segundos
+        if (botonesActivados.Count == 0)
         {
             tiempoPrimerClick = Time.time;
             comenzandoCuenta = true;
-            Debug.Log("Primer jugador listo. Tienen 2 segundos...");
+            Debug.Log("Primer boton presionado. Tienen 2 segundos para activar el otro...");
         }
 
-        if (!jugadoresListos.Contains(actorNumber))
+        if (!botonesActivados.Contains(idBoton))
         {
-            jugadoresListos.Add(actorNumber);
-            Debug.Log("Jugador " + actorNumber + " listo. Total: " + jugadoresListos.Count + "/" + PhotonNetwork.CurrentRoom.PlayerCount);
+            botonesActivados.Add(idBoton);
+            Debug.Log("Boton " + idBoton + " registrado. Botones listos: " + botonesActivados.Count + "/2");
         }
 
-        if (jugadoresListos.Count >= PhotonNetwork.CurrentRoom.PlayerCount && PhotonNetwork.CurrentRoom.PlayerCount > 0)
+        // Si ya se presionaron 2 botones diferentes dentro del tiempo límite
+        if (botonesActivados.Count >= 2)
         {
             yaSeDesvanecio = true;
-
-            // LLAMADA AL RAISE EVENT: El Master Client envia la señal pura por red
+            Debug.Log("¡Coordinacion exitosa de a dos! Desvaneciendo puerta...");
             MandarRaiseEventDesvanecer();
         }
     }
 
     private void MandarRaiseEventDesvanecer()
     {
-        // No necesitamos mandar datos pesados, solo el aviso, por eso pasamos null
         object[] content = null;
-
-        // Configuramos para que el evento le llegue a TODOS en la sala (incluido el Master Client)
         RaiseEventOptions raiseEventOptions = new RaiseEventOptions { Receivers = ReceiverGroup.All };
-        SendOptions sendOptions = new SendOptions { Reliability = true }; // True asegura que el paquete llegue si o si
+        SendOptions sendOptions = new SendOptions { Reliability = true };
 
         PhotonNetwork.RaiseEvent(DESVANECER_PUERTA_EVENT_CODE, content, raiseEventOptions, sendOptions);
     }
 
-    // ESTA FUNCIÓN RECIBE EL EVENTO EN TODAS LAS COMPUTADORAS AL MISMO TIEMPO
     public void OnEvent(EventData photonEvent)
     {
-        byte eventCode = photonEvent.Code;
-
-        if (eventCode == DESVANECER_PUERTA_EVENT_CODE)
+        if (photonEvent.Code == DESVANECER_PUERTA_EVENT_CODE)
         {
-            Debug.Log("RaiseEvent recibido con exito. Desvaneciendo puertas en este cliente.");
-
-            // En vez de destruirla de la red, la apagamos localmente. Funciona con cualquier objeto.
             gameObject.SetActive(false);
         }
     }

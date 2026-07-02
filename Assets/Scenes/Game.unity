@@ -1332,6 +1332,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   puertaObjetivo: {fileID: 1877974969}
+  idBotonUnico: 1
 --- !u!1 &822837846
 GameObject:
   m_ObjectHideFlags: 0
@@ -2137,6 +2138,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   puertaObjetivo: {fileID: 1487620613}
+  idBotonUnico: 2
 --- !u!1 &1082877246
 GameObject:
   m_ObjectHideFlags: 0
@@ -3126,8 +3128,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7af40bf4bbb4e3e41b72f18d36822cc7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  posicionAbiertaOffset: {x: 0, y: 4}
-  velocidadApertura: 3
 --- !u!1 &1556189588
 GameObject:
   m_ObjectHideFlags: 0
@@ -3670,8 +3670,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7af40bf4bbb4e3e41b72f18d36822cc7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  posicionAbiertaOffset: {x: 0, y: 4}
-  velocidadApertura: 3
 --- !u!1 &1960977356
 GameObject:
   m_ObjectHideFlags: 0

@@ -60,6 +60,8 @@ MonoBehaviour:
   - RPC_RequestEnemyDamage
   - RPC_AbrirPuertaGlobal
   - RPC_RegistrarEnterJugador
+  - RPC_RegistrarQJugador
+  - RPC_RegistrarQBoton
   DisableAutoOpenWizard: 1
   ShowSettings: 0
   DevRegionSetOnce: 1
