@@ -2141,7 +2141,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 72463faac5f2f9644ac19a97fe0960ce, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  puertaObjetivo: {fileID: 1487620613}
+  puertaObjetivo: {fileID: 1877974969}
   idBotonUnico: 2
   tamanoSensor: {x: 0.39, y: 0.3}
   capasJugador:
@@ -3136,6 +3136,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7af40bf4bbb4e3e41b72f18d36822cc7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  otraPuerta: {fileID: 0}
 --- !u!1 &1556189588
 GameObject:
   m_ObjectHideFlags: 0
@@ -3678,6 +3679,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7af40bf4bbb4e3e41b72f18d36822cc7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  otraPuerta: {fileID: 1487620606}
 --- !u!1 &1960977356
 GameObject:
   m_ObjectHideFlags: 0
