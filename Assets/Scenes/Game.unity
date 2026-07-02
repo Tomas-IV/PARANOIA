@@ -1281,7 +1281,7 @@ MonoBehaviour:
   puertaAbajo: {fileID: 0}
   cantidadBotones: 2
   nombrePrefabBoss: Boss
-  puntoSpawnBoss: {fileID: 0}
+  puntoSpawnBoss: {fileID: 1250629696}
 --- !u!212 &718767992
 SpriteRenderer:
   m_ObjectHideFlags: 0
