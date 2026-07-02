@@ -3,66 +3,52 @@ using Photon.Pun;
 
 public class ButtonZoneController : MonoBehaviour
 {
-    [Header("Configuracion de Equipo")]
+    [Header("Conexión")]
+    public DoorController puertaPrincipal;
     public int idBoton;
     public float radioDeteccion = 0.6f;
 
-    private DoorController[] puertasEnEscena;
-    private GameObject jugadorLocal = null;
     private bool presionandoQ = false;
 
-    void Start()
+    private void Update()
     {
-        // Modo automático: busca todas las puertas del mapa sin necesidad de arrastrar nada al Inspector
-        puertasEnEscena = FindObjectsOfType<DoorController>();
-    }
-
-    void Update()
-    {
-        if (jugadorLocal == null)
-        {
-            BuscarMiJugadorLocal();
-        }
-
         bool hayJugadorMio = false;
 
-        if (jugadorLocal != null)
+        Collider2D[] colisiones = Physics2D.OverlapCircleAll(
+            transform.position,
+            radioDeteccion);
+
+        foreach (Collider2D col in colisiones)
         {
-            float distancia = Vector2.Distance(transform.position, jugadorLocal.transform.position);
-            if (distancia <= radioDeteccion)
+            if (!col.CompareTag("Player") &&
+                !col.gameObject.name.Contains("Player"))
+            {
+                continue;
+            }
+
+            PhotonView pv = col.GetComponent<PhotonView>();
+
+            if (pv == null)
+            {
+                pv = col.GetComponentInParent<PhotonView>();
+            }
+
+            if (pv != null && pv.IsMine)
             {
                 hayJugadorMio = true;
+                break;
             }
         }
 
-        bool estadoActual = (hayJugadorMio && Input.GetKey(KeyCode.Q));
+        bool estadoActual = hayJugadorMio && Input.GetKey(KeyCode.Q);
 
         if (estadoActual != presionandoQ)
         {
             presionandoQ = estadoActual;
 
-            // Le avisamos a todas las puertas que detectamos en la escena en simultáneo
-            foreach (DoorController puerta in puertasEnEscena)
+            if (puertaPrincipal != null)
             {
-                if (puerta != null)
-                {
-                    puerta.EnviarVoto(idBoton, presionandoQ);
-                }
-            }
-        }
-    }
-
-    private void BuscarMiJugadorLocal()
-    {
-        PhotonView[] todosLosViews = FindObjectsOfType<PhotonView>();
-        foreach (PhotonView view in todosLosViews)
-        {
-            if (view.IsMine && (view.CompareTag("Player") ||
-                                view.gameObject.name.Contains("PlayerSho") ||
-                                view.gameObject.name.Contains("PlayerSpe")))
-            {
-                jugadorLocal = view.gameObject;
-                return;
+                puertaPrincipal.EnviarVoto(idBoton, presionandoQ);
             }
         }
     }
