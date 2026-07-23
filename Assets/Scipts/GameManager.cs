@@ -35,6 +35,8 @@ public class GameManager : MonoBehaviourPunCallbacks
     public List<PlayerManager> Players { get; } = new();
 
     private bool gameStarted;
+    private bool waitingForPlayers;
+    private bool waitingAfterLeave;
     private int jugadoresMuertos = 0; // Contador de jugadores caídos
 
     private Coroutine waitingCoroutine;
@@ -49,13 +51,19 @@ public class GameManager : MonoBehaviourPunCallbacks
 
     private void Start()
     {
-        Time.timeScale = 1f;
         CurrentState = GameState.WaitingPlayers;
-        TryStartMatch();
+        if (PhotonNetwork.InRoom)
+        {
+            TryStartMatch();
+        }
     }
 
     public override void OnPlayerEnteredRoom(Player newPlayer)
     {
+        if (!PhotonNetwork.IsMasterClient)
+            return;
+
+
         TryStartMatch();
     }
 
@@ -75,17 +83,20 @@ public class GameManager : MonoBehaviourPunCallbacks
 
     public override void OnPlayerLeftRoom(Player otherPlayer)
     {
-        // Si alguien se va, podríamos chequear condiciones de victoria/derrota aquí en el futuro
-    }
+        if (!PhotonNetwork.IsMasterClient)
+            return;
 
-    private void PauseGame()
-    {
-        photonView.RPC(nameof(RPC_PauseGame),RpcTarget.All);
-    }
 
-    private void ResumeGame()
-    {
-        photonView.RPC(nameof(RPC_ResumeGame),RpcTarget.All);
+
+        if (CurrentState != GameState.Playing)
+            return;
+
+
+
+        if (PhotonNetwork.CurrentRoom.PlayerCount < minPlayers)
+        {
+            StartWaitingForPlayer();
+        }
     }
 
     private void TryStartMatch()
@@ -99,35 +110,54 @@ public class GameManager : MonoBehaviourPunCallbacks
         if (gameStarted)
             return;
 
-        if (PhotonNetwork.CurrentRoom.PlayerCount >= minPlayers)
+        int players = PhotonNetwork.CurrentRoom.PlayerCount;
+
+        if (players >= minPlayers)
         {
             StartGame();
         }
         else
         {
-            if (waitingCoroutine == null)
+            if (!waitingForPlayers)
             {
+                waitingForPlayers = true;
+
                 waitingCoroutine = StartCoroutine(PlayerWaitingCountdown());
             }
         }
 
-        Debug.Log("[GameManager] Match Started");
+    }
+
+    private void StartWaitingForPlayer()
+    {
+        if (waitingAfterLeave)
+            return;
+
+        waitingAfterLeave = true;
+        gameStarted = false;
+
+        photonView.RPC(nameof(RPC_SetGameState),RpcTarget.AllBuffered,GameState.WaitingPlayers);
+
+        if (waitingCoroutine != null)
+        {
+            StopCoroutine(waitingCoroutine);
+        }
+
+
+
+        waitingCoroutine = StartCoroutine(PlayerWaitingCountdown());
     }
 
     private IEnumerator PlayerWaitingCountdown()
     {
-        PauseGame();
         int timer = waitingTime;
-
 
         while (timer > 0)
         {
             photonView.RPC(nameof(RPC_UpdateWaitingText),RpcTarget.All,timer);
 
-
             yield return new WaitForSecondsRealtime(1f);
-
-
+            
             // Entró otro jugador
             if (PhotonNetwork.CurrentRoom.PlayerCount >= minPlayers)
             {
@@ -139,14 +169,17 @@ public class GameManager : MonoBehaviourPunCallbacks
             timer--;
         }
 
-
         // No llegaron jugadores suficientes
         photonView.RPC(nameof(RPC_NoPlayersFound),RpcTarget.All);
 
-
         yield return new WaitForSecondsRealtime(3f);
 
-        ResumeGame();
+        if (PhotonNetwork.CurrentRoom.PlayerCount >= minPlayers)
+        {
+            StartGame();
+
+            yield break;
+        }
 
         if (PhotonNetwork.InRoom)
         {
@@ -162,16 +195,13 @@ public class GameManager : MonoBehaviourPunCallbacks
 
     private void StartGame()
     {
-        ResumeGame();
-        if (waitingCoroutine != null)
-        {
-            StopCoroutine(waitingCoroutine);
-            waitingCoroutine = null;
-        }
-
-
+        if (gameStarted)
+            return;
+        
         gameStarted = true;
-
+        waitingForPlayers = false;
+        waitingAfterLeave = false;
+        waitingCoroutine = null;
 
         photonView.RPC(nameof(RPC_SetGameState),RpcTarget.AllBuffered,GameState.Playing);
 
@@ -192,8 +222,8 @@ public class GameManager : MonoBehaviourPunCallbacks
     [PunRPC]
     private void RPC_UpdateWaitingText(int seconds)
     {
-        //if (waitingCanvas != null)
-        //    waitingCanvas.SetActive(true);
+
+        waitingText.gameObject.SetActive(true);
 
 
         if (waitingText != null)
@@ -220,18 +250,6 @@ public class GameManager : MonoBehaviourPunCallbacks
     {
         if (waitingCanvas != null)
             waitingText.gameObject.SetActive(false);
-    }
-
-    [PunRPC]
-    private void RPC_PauseGame()
-    {
-        Time.timeScale = 0f;
-    }
-
-    [PunRPC]
-    private void RPC_ResumeGame()
-    {
-        Time.timeScale = 1f;
     }
 
 
