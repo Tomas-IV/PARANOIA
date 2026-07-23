@@ -21,14 +21,13 @@ public class PlayerData
 // --- MANEJADOR PRINCIPAL ---
 public class SaveManager : MonoBehaviourPunCallbacks
 {
-    public static SaveManager Instancia; // Creado como Singleton para acceder fácil desde otros scripts
+    public static SaveManager Instancia; 
 
     public PlayerData datosDelJuego = new PlayerData();
     private string rutaArchivo;
 
     private void Awake()
     {
-        // Configuramos el Singleton
         if (Instancia == null)
         {
             Instancia = this;

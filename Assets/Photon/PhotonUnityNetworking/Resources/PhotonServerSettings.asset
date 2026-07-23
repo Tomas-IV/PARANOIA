@@ -78,6 +78,11 @@ MonoBehaviour:
   - RPC_RequestThrowGrenade
   - RPC_RegistrarMuerte
   - RPC_RequestPickup
+  - RPC_HideWaitingUI
+  - RPC_NoPlayersFound
+  - RPC_UpdateWaitingText
+  - RPC_PauseGame
+  - RPC_ResumeGame
   DisableAutoOpenWizard: 1
   ShowSettings: 0
   DevRegionSetOnce: 1

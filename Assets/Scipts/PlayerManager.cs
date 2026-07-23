@@ -81,11 +81,15 @@ public class PlayerManager : MonoBehaviourPun
         Debug.Log("[DAMAGE] HP after: " + CurrentHealth);
 
         if (CurrentHealth <= 0)
+        {
             EnterDownedState();
+            
+        }
     }
 
     private void EnterDownedState()
     {
+        GameManager.Instance.JugadorMuerto();
         photonView.RPC(nameof(RPC_Downed), RpcTarget.All);
     }
 
@@ -94,7 +98,6 @@ public class PlayerManager : MonoBehaviourPun
     {
         CurrentHealth = health;
 
-        // CORRECCION: Validacion para que no tire NullReference en clientes remotos
         if (playerUI != null)
         {
             playerUI.SetHealth(CurrentHealth, maxHealth);

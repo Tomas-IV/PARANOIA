@@ -9,7 +9,7 @@ public class ContadorBajasUI : MonoBehaviour
     private GameObject scoreCanvas;
     private Text textoScore;
 
-    // --- SISTEMA DE ENCRIPTACIÓN XOR (Basado en el PPT) ---
+    // --- SISTEMA DE ENCRIPTACIÓN XOR ---
     // Nuestra clave secreta. ¡Nadie fuera del equipo de desarrollo debe saberla!
     private int claveSecreta = 8352;
 
