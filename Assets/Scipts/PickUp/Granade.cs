@@ -27,6 +27,37 @@ public class Granade : MonoBehaviourPun, IPunObservable
         targetPosition = destination;
         ownerActorNumber = actorNumber;
         initialized = true;
+
+        Collider2D grenadeCollider = GetComponent<Collider2D>();
+
+        foreach (PlayerManager player in FindObjectsOfType<PlayerManager>())
+        {
+            if (player.photonView.OwnerActorNr == ownerActorNumber)
+            {
+                Collider2D playerCollider = player.GetComponent<Collider2D>();
+
+                if (playerCollider != null)
+                {
+                    Physics2D.IgnoreCollision(grenadeCollider, playerCollider, true);
+                    StartCoroutine(ReEnableCollision(playerCollider));
+                }
+
+                break;
+            }
+        }
+    }
+
+    private IEnumerator ReEnableCollision(Collider2D playerCollider)
+    {
+        yield return new WaitForSeconds(0.3f);
+
+        if (playerCollider != null)
+        {
+            Physics2D.IgnoreCollision(
+                GetComponent<Collider2D>(),
+                playerCollider,
+                false);
+        }
     }
 
     private void Update()

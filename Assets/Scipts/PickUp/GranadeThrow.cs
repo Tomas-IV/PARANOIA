@@ -11,6 +11,7 @@ public class GranadeThrow : MonoBehaviourPun
 
     [Header("Throw")]
     [SerializeField] private float maxThrowDistance = 6f;
+    [SerializeField] private float spawnOffset = 0.4f;
 
     private PlayerItems playerItems;
 
@@ -90,7 +91,10 @@ public class GranadeThrow : MonoBehaviourPun
         if (!PhotonNetwork.IsMasterClient)
             return;
 
-        GameObject grenadeObject = PhotonNetwork.InstantiateRoomObject(grenadePrefab.name,startPosition,Quaternion.identity);
+        Vector3 direction = (destination - startPosition).normalized;
+        Vector3 spawnPosition = startPosition + direction * spawnOffset;
+
+        GameObject grenadeObject = PhotonNetwork.InstantiateRoomObject(grenadePrefab.name, spawnPosition, Quaternion.identity);
         Debug.Log(grenadeObject);
         Granade granade = grenadeObject.GetComponent<Granade>();
 
