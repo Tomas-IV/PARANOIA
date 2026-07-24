@@ -2513,7 +2513,7 @@ MonoBehaviour:
   puertaPrincipal: {fileID: 718767991}
   idBoton: 1
   radioDeteccion: 2
-  tiempoActivo: 1.5
+  tiempoActivo: 0.5
 --- !u!61 &1081796995
 BoxCollider2D:
   m_ObjectHideFlags: 0
